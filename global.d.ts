@@ -20,6 +20,7 @@ declare global {
         getAllTestCases:(message:any)=>void,
         test123:(message:any)=>void
         invoke: (channel:string, args?:any) => Promise<any>,
+        on: (channel: string, func: (...args: unknown[]) => void)=>void
       }
       shell: Shell;
     }

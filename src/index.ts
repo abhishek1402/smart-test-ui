@@ -55,34 +55,32 @@ app.on('activate', () => {
     createWindow();
   }
 });
-ipcMain.handle('recordTest', async (event:any, arg:any) => {
-  mainWindow.webContents.send('test123',"sdfsfd");
+ipcMain.handle('recordTest', async (event:any, {testCase,name}:{testCase:string,name:string}) => {
+  // mainWindow.webContents.send('test123',"sdfsfd");
+ 
+  const testCases = await TestServies.recordTestCase({mainWindow,testCase,name});
   return "abhishek"
-  // const child = utilityProcess.fork(path.join(__dirname, 'test.js'))
-  // child.postMessage({ message: 'recordTest' })
+ 
 });
 
-ipcMain.handle('runTestCase', async (event:any, arg:any) => {
-  mainWindow.webContents.send('test123',"sdfsfd");
+ipcMain.handle('recordTestOnLocal', async (event:any, arg:any) => {
+  // mainWindow.webContents.send('test123',"sdfsfd");
+ 
+  const testCases = await TestServies.recordTestCaseOnLocal({mainWindow});
   return "abhishek"
-  // const child = utilityProcess.fork(path.join(__dirname, 'test.js'))
-  // child.postMessage({ message: 'recordTest' })
+ 
 });
-
 ipcMain.handle('getAllTestCases', async (event:any, arg:any) => {
   const testCases = await TestServies.getAllTestCases();
-  // mainWindow.webContents.send('test123',"sdfsfd");
+
   return testCases
-  // const child = utilityProcess.fork(path.join(__dirname, 'test.js'))
-  // child.postMessage({ message: 'recordTest' })
+
 });
 ipcMain.handle('run-test', async (event:any, arg:any) => {
-  console.log("arg>>>",arg)
-  const successfullRun = await TestServies.runTestCase(arg);
-  // mainWindow.webContents.send('test123',"sdfsfd");
+  const successfullRun = await TestServies.runTestCase({testCase:arg,mainWindow});
+ 
   return successfullRun
-  // const child = utilityProcess.fork(path.join(__dirname, 'test.js'))
-  // child.postMessage({ message: 'recordTest' })
+ 
 });
 
 

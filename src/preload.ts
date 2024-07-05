@@ -15,6 +15,7 @@ const ipc = {
         'sendReceive': [
           'recordTest',
           'getAllTestCases',
+          "recordTestOnLocal",
           "run-test"
 
         ]

@@ -1,6 +1,6 @@
 import { MongoClient,Db } from 'mongodb';
 
-const uri = "mongodb+srv://abhi14022041:XC39mPiUaaQsEVhz@smart-test-ui-db.j6kfa84.mongodb.net/?retryWrites=true&w=majority&appName=Smart-Test-Ui-Db";
+const uri = process.env.mongo_url;
 
 const dbName = 'SMART-TEST-UI-DB';
 
