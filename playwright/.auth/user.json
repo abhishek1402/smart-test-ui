@@ -1,0 +1,506 @@
+{
+  "cookies": [
+    {
+      "name": "gaClientID",
+      "value": "23097568.1737556794",
+      "domain": "cleartax-qa-http.internal.cleartax.co",
+      "path": "/services",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "aI",
+      "value": "97fd99fc-3412-4f3b-a998-ceefd17172ed",
+      "domain": ".cleartax-qa-http.internal.cleartax.co",
+      "path": "/",
+      "expires": 1772116792.902891,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "uti",
+      "value": "%7B%22s%22%3A%22%22%2C%22m%22%3A%22%22%2C%22c%22%3A%22%22%2C%22ca%22%3A%22%22%2C%22mt%22%3Anull%2C%22k%22%3Anull%2C%22g%22%3Anull%7D",
+      "domain": "cleartax-qa-http.internal.cleartax.co",
+      "path": "/",
+      "expires": 1737729595.921203,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gcl_au",
+      "value": "1.1.1661064241.1737556794",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1745332793,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "muc_ads",
+      "value": "22d7f75b-0b82-4e50-8a8d-386cfd0c4b55",
+      "domain": ".t.co",
+      "path": "/",
+      "expires": 1772116793.976623,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "__cf_bm",
+      "value": "ltDdj2NyYKtf5ug92fxdazhpzVrSw.jrDf3NO0p2Isc-1737556793-1.0.1.1-jSiKyHpnFDb9ty7Vrz7QzYb4bWZm8ZpjfWxQ5sL3CAhG6Xq3vvf3c2NHRYktntBWrnBYJhfhnbYHbWdOk2blqg",
+      "domain": ".t.co",
+      "path": "/",
+      "expires": 1737558593.976667,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "CLID",
+      "value": "306b257c64f6418391843f4146eb9220.20250122.20260122",
+      "domain": "www.clarity.ms",
+      "path": "/",
+      "expires": 1769092793.027073,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "test_cookie",
+      "value": "CheckForPermission",
+      "domain": ".doubleclick.net",
+      "path": "/",
+      "expires": 1737557694.063477,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_clck",
+      "value": "2tunks%7C2%7Cfss%7C0%7C1848",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1769092794,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "guest_id_marketing",
+      "value": "v1%3A173755679416834178",
+      "domain": ".twitter.com",
+      "path": "/",
+      "expires": 1772116794.261459,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "guest_id_ads",
+      "value": "v1%3A173755679416834178",
+      "domain": ".twitter.com",
+      "path": "/",
+      "expires": 1772116794.261522,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "personalization_id",
+      "value": "\"v1_CJ/TCfesCsNm34/w+jpOpw==\"",
+      "domain": ".twitter.com",
+      "path": "/",
+      "expires": 1772116794.26154,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "guest_id",
+      "value": "v1%3A173755679416834178",
+      "domain": ".twitter.com",
+      "path": "/",
+      "expires": 1772116794.261551,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_uetsid",
+      "value": "be8fc3e0d8ce11ef834bfd34ade4f149",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1737643194,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_uetvid",
+      "value": "be8ff6a0d8ce11ef90f7d9fb11cabb0f",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1771252794,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "MUID",
+      "value": "18908DD5351C62811E7A98A934B163EF",
+      "domain": ".bing.com",
+      "path": "/",
+      "expires": 1771252795.874766,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MR",
+      "value": "0",
+      "domain": ".bat.bing.com",
+      "path": "/",
+      "expires": 1738161595.483436,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "lidc",
+      "value": "\"b=VGST01:s=V:r=V:a=V:p=V:g=3429:u=1:x=1:i=1737556794:t=1737643194:v=2:sig=AQHd4cBaYN3cfAvPfX2bMkPjt1fBN0Bl\"",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1737643194.545356,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "li_sugr",
+      "value": "1fa96bb0-436f-4839-8a48-dc33a6b01638",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1745332795.314979,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bcookie",
+      "value": "\"v=2&14eb7c3f-dbda-431b-8fa2-a6fbffc4cc79\"",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1769092796.315139,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "UserMatchHistory",
+      "value": "AQLZKqwH4xvg9wAAAZSOdJ1VFNpZXXPGcKfKweGTi-X4Zlv9VItZ_pJfHZJPmkTmRzVrqcwKyK7-fA",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1740148794.808297,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "AnalyticsSyncHistory",
+      "value": "AQKlphmX0gV2mQAAAZSOdJ1VPBHhJpJkfQJNctVGB6N8QoqZ3ry8UNDCvviYg00fXryWLypYQ8GEWTqqRNQjXA",
+      "domain": ".linkedin.com",
+      "path": "/",
+      "expires": 1740148794.808351,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "bscookie",
+      "value": "\"v=1&20250122143954c692f2b9-2b1c-4d07-888c-d2951bd87dddAQFPCqHdlBN-p0ODoRgWu7otKSiKXWQg\"",
+      "domain": ".www.linkedin.com",
+      "path": "/",
+      "expires": 1769092795.079876,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MR",
+      "value": "0",
+      "domain": ".c.bing.com",
+      "path": "/",
+      "expires": 1738161595.874821,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "SRM_B",
+      "value": "18908DD5351C62811E7A98A934B163EF",
+      "domain": ".c.bing.com",
+      "path": "/",
+      "expires": 1771252795.874838,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "SM",
+      "value": "C",
+      "domain": ".c.clarity.ms",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MUID",
+      "value": "18908DD5351C62811E7A98A934B163EF",
+      "domain": ".clarity.ms",
+      "path": "/",
+      "expires": 1771252795.978809,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MR",
+      "value": "0",
+      "domain": ".c.clarity.ms",
+      "path": "/",
+      "expires": 1738161595.978846,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ANONCHK",
+      "value": "0",
+      "domain": ".c.clarity.ms",
+      "path": "/",
+      "expires": 1737557395.978869,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ctLangPreference",
+      "value": "eng_IND",
+      "domain": "sso-qa-pub.internal.cleartax.co",
+      "path": "/",
+      "expires": 1772116799.791843,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ssoAnonId",
+      "value": "38604c7c-bafd-4b36-a176-4bb96dff0744",
+      "domain": "sso-qa-pub.internal.cleartax.co",
+      "path": "/",
+      "expires": 1769092799.79187,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ssoAId",
+      "value": "752d0b48-3364-41a5-b35d-9c9726526d25",
+      "domain": "sso-qa-pub.internal.cleartax.co",
+      "path": "/",
+      "expires": 1769092799.791887,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Strict"
+    },
+    {
+      "name": "MSPTC",
+      "value": "MF8naqZtGVyOZ2jK64CaXQeRp2-2P97B7Rjdy7MXwQI",
+      "domain": ".bing.com",
+      "path": "/",
+      "expires": 1771252797.300444,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_gid",
+      "value": "GA1.2.737891124.1737556796",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1737643196,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gat",
+      "value": "1",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1737556856,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.23097568.1737556794",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1772116796.388984,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_clsk",
+      "value": "1lpsr90%7C1737556797303%7C2%7C1%7Cw.clarity.ms%2Fcollect",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1737643197,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "sid",
+      "value": "2.7ae2acb1-1c95-4f80-9836-91f9a76c05f8_2bacd05c2ba3c9be99f55308bb4126f42ad65079c04d571bb1632b35cadfa294",
+      "domain": "sso-qa-pub.internal.cleartax.co",
+      "path": "/",
+      "expires": 1738161599.791793,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ga_C37VX8T52R",
+      "value": "GS1.1.1737556793.1.1.1737556799.0.0.0",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1772116799.716284,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_4TX14F3R0D",
+      "value": "GS1.1.1737556793.1.1.1737556799.54.0.0",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1772116799.720764,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_79S2984LY4",
+      "value": "GS1.1.1737556793.1.1.1737556799.0.0.0",
+      "domain": ".cleartax.co",
+      "path": "/",
+      "expires": 1772116799.72318,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "sid",
+      "value": "2.7ae2acb1-1c95-4f80-9836-91f9a76c05f8_2bacd05c2ba3c9be99f55308bb4126f42ad65079c04d571bb1632b35cadfa294",
+      "domain": "cleartax-qa-http.internal.cleartax.co",
+      "path": "/",
+      "expires": 1738161599.781872,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ctLangPreference",
+      "value": "eng_IND",
+      "domain": "cleartax-qa-http.internal.cleartax.co",
+      "path": "/",
+      "expires": 1772116799.781923,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ssoAnonId",
+      "value": "9b82bf6f-fd0a-483d-ba7f-b810d42031f8",
+      "domain": "cleartax-qa-http.internal.cleartax.co",
+      "path": "/",
+      "expires": 1769092799.78196,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ssoAId",
+      "value": "ac0bfbaa-b798-4b5a-a469-96f5496314d0",
+      "domain": "cleartax-qa-http.internal.cleartax.co",
+      "path": "/",
+      "expires": 1769092799.782014,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://cleartax-qa-http.internal.cleartax.co",
+      "localStorage": [
+        {
+          "name": "rzp_device_id",
+          "value": "1.e9dfa3473e7f1cb8a92edaedb7e82d987ec22388.1737556793641.31649642"
+        },
+        {
+          "name": "lastExternalReferrer",
+          "value": "empty"
+        },
+        {
+          "name": "_uetsid_exp",
+          "value": "Thu, 23 Jan 2025 14:39:54 GMT"
+        },
+        {
+          "name": "lastExternalReferrerTime",
+          "value": "1737556794556"
+        },
+        {
+          "name": "rzp_checkout_anon_id",
+          "value": "32c73519a06b457f901b78301eb095c8"
+        },
+        {
+          "name": "_uetvid",
+          "value": "be8ff6a0d8ce11ef90f7d9fb11cabb0f"
+        },
+        {
+          "name": "_uetvid_exp",
+          "value": "Mon, 16 Feb 2026 14:39:54 GMT"
+        },
+        {
+          "name": "li_adsId",
+          "value": "4455a0fa-099e-4849-b324-4795fa6dc1d2"
+        },
+        {
+          "name": "_uetsid",
+          "value": "be8fc3e0d8ce11ef834bfd34ade4f149"
+        }
+      ]
+    },
+    {
+      "origin": "https://www.google.com",
+      "localStorage": [
+        {
+          "name": "rc::a",
+          "value": "MTY0ZDFrbjFnZjc0cXo="
+        }
+      ]
+    }
+  ]
+}
