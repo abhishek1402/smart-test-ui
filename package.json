@@ -10,8 +10,11 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "record-test": "playwright codegen -o test.spec.js",
-    "run-test": "playwright test test.spec.js --headed "
+    "record-test": "playwright codegen -o test.spec.js --load-storage=playwright/.auth/user.json https://cleartax-qa-http.internal.cleartax.co/services/",
+    "run-test": "playwright test test.spec.js --headed --load-storage=playwright/.auth/user.json",
+    "show-report": "playwright show-report",
+    "store-auth": "playwright codegen https://cleartax-qa-http.internal.cleartax.co/filing/2024/0/ePT2crmicEqWoVeUSBeU2Q/copilot --save-storage=auth.json",
+    "load-auth": "playwright codegen --load-storage=auth.json https://cleartax-qa-http.internal.cleartax.co/filing/2024/0/ePT2crmicEqWoVeUSBeU2Q/copilot"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.4.0",

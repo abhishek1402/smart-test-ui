@@ -4,6 +4,18 @@ import fs from "fs";
 import { execSync } from "child_process";
 import { BrowserWindow, ipcMain, utilityProcess } from "electron";
 import { test } from "node:test";
+import { ObjectId } from 'mongodb'
+
+const extractLastGotoUrl = (testScript: string) => {
+    const gotoRegex = /page\.goto\(['"]([^'"]+)['"]\)/g;
+    const matches = [...testScript.matchAll(gotoRegex)];
+    
+    if (matches.length > 0) {
+      return matches[matches.length - 1][1]; // Return the last match
+    }
+    
+    return null;
+  };
 
 
 const currentDir = __dirname; //will be inside webpack
@@ -39,53 +51,87 @@ class TestServies {
         return testCases
     }
 
-    static runTestCase = async ({testCase,mainWindow}:{testCase:{test:string,id:string,env:"Dev"|"Qa"|"Prod"},mainWindow:BrowserWindow})=>{
-    
-
-
-            const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'))
-
-            child.postMessage({testCase:testCase.test,type:"run"})
-           
-            child.on("exit",()=>{
+    static runTestCase = async ({testCase,mainWindow}:{testCase:{test:string,id:string, env:"Dev"|"Qa"|"Prod", preTestId: string},mainWindow:BrowserWindow})=>{
+        if(testCase.preTestId) {
+            try {
+                const preTest = await TEST_COLLECTION.findOne({ _id: new ObjectId(testCase.preTestId) });
+                console.log('inside pretest match found in', preTest);
+                if(preTest){
+                    const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'));
+                    child.postMessage({testCase:preTest.test,type:"run"});
+                    child.on("exit",()=>{
+                        const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'));
+                        child.postMessage({testCase:testCase.test,type:"run"});
+                        child.on("exit",()=>{
+                            mainWindow.webContents.send('testRunFailed',{id:testCase.id});
+                        });
+                    });
+                }
+                return;
+            } catch (err) {
+                console.error("Failed to convert preTestId to ObjectId: ", err);
                 mainWindow.webContents.send('testRunFailed',{id:testCase.id});
-            })
-
-     
-
-
+                return;
+            }
+        }
+        const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'));
+        child.postMessage({testCase:testCase.test,type:"run"});
+        child.on("exit",()=>{
+            mainWindow.webContents.send('testRunFailed',{id:testCase.id});
+        });
     }
 
-    static recordTestCase = async ({mainWindow,testCase,name}:{mainWindow:BrowserWindow,testCase:string,name:string})=>{
-        try{
-           console.log("REcorcd fullTEST cse")
-            const test = await TEST_COLLECTION.insertOne({test:testCase,name:name})
-            return {success:true}
-           
+    static recordTestCase = async ({mainWindow,testCase,name, preTestId}:{mainWindow:BrowserWindow,testCase:string,name:string, preTestId: string})=>{
+        try {
+            console.log("Record full TEST case preTestId", preTestId);
+            const test = await TEST_COLLECTION.insertOne({test: testCase, name: name, preTestId: preTestId});
+            return {success: true};
+        } catch (e) {
+            console.error("Error recording test case: ", e);
         }
-        catch(e){
-           
-        }
-
-
     }
 
-    static recordTestCaseOnLocal = async ({mainWindow}:{mainWindow:BrowserWindow})=>{
+    static recordTestCaseOnLocal = async ({mainWindow, preTestId}:{mainWindow:BrowserWindow, preTestId: string})=>{
         try{
-            console.log("REcorcd fullTEST local")
+            console.log("REcorcd fullTEST local", preTestId);
+            let startUrl: string | null = null;
+            if(preTestId) {
+               
+                try {
+                    const preTest = await TEST_COLLECTION.findOne({ _id: new ObjectId(preTestId) });
+                    console.log('inside pretest match found in', preTest);
+                    if(preTest){
+                        startUrl = extractLastGotoUrl(preTest.test);
+                        const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'));
+                        child.postMessage({testCase:preTest.test,type:"run"});
+                        child.on("exit",()=>{
+                            const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'))
+                            child.postMessage({type:"record", startUrl: startUrl });
+                            
+                            child.on("message",async (e)=>{
+                                mainWindow.webContents.send('testRecoredOnLocal',{test:e});
+                            })
+                        });
+                    }
+                    return;
+                } catch (err) {
+                    console.error("Failed to convert preTestId to ObjectId: ", err);
+                    mainWindow.webContents.send('testRunFailed',{id:preTestId});
+                    return;
+                }
+            }
             const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'))
-            child.postMessage({type:"record"})
+            child.postMessage({type:"record", startUrl: startUrl });
             
             child.on("message",async (e)=>{
                 mainWindow.webContents.send('testRecoredOnLocal',{test:e});
             })
-
+          
            
         }
         catch(e){
            
         }
-
 
     }
 

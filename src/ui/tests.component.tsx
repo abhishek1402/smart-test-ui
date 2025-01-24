@@ -82,7 +82,7 @@ useEffect(()=>{
                         disabled={testStarted[ele._id]}
                         onClick={()=>{
                           setTestStarted({...testStarted,[ele._id]:true})
-                          window.ipcRender.invoke('run-test',{test:ele.test,id:ele._id,env:env}).then(data=>{
+                          window.ipcRender.invoke('run-test',{test:ele.test,id:ele._id,env:env, preTestId: ele.preTestId}).then(data=>{
                             console.log(data)
                           })
                         
