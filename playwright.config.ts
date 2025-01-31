@@ -29,12 +29,13 @@ export default defineConfig({
   // reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
-
   /* Configure projects for major browsers */
   projects: [
+    { name: 'setup', testMatch: '**/*.setup.ts' },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
 
     // {
