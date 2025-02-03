@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { userProjectsConfig } from './user-projects.config';
 
 /**
  * Read environment variables from file.
@@ -19,10 +20,26 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
+  reporter: [['html', { outputFolder: 'playwright-report' }]],
   workers: process.env.CI ? 1 : undefined,
   use: {
     launchOptions: {
-      slowMo: 500,
+      slowMo: 2000,
+    },
+  },
+  expect: {
+    // Maximum time expect() should wait for the condition to be met.
+    timeout: 5000,
+
+    toHaveScreenshot: {
+      // An acceptable amount of pixels that could be different, unset by default.
+      maxDiffPixels: 10,
+    },
+
+    toMatchSnapshot: {
+      // An acceptable ratio of pixels that are different to the
+      // total amount of pixels, between 0 and 1.
+      maxDiffPixelRatio: 0.1,
     },
   },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -31,13 +48,28 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
-    { name: 'setup', testMatch: '**/*.setup.ts' },
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
+      name: 'setup',
+      testMatch: '**/*.setup.ts',
     },
 
+    {
+      name: 'chrome',
+      use: {
+        ...devices['Desktop Chrome'],
+        // storageState: 'playwright/.auth/user.json',
+      },
+      // dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: 'playwright/.auth/user.json',
+      },
+      // dependencies: ['setup'],
+    },
+    ...userProjectsConfig,
     // {
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },

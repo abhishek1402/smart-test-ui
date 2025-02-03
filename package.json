@@ -10,8 +10,9 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
-    "record-test": "playwright codegen -o test.spec.js",
-    "run-test": "playwright test test.spec.js --headed "
+    "auth": "playwright test ./tests/auth.setup.ts --headed",
+    "record-test": "playwright codegen -o test.spec.js --load-storage=playwright/.auth/user.json https://cleartax.in/",
+    "run-test": "playwright test test.spec.js --headed --reporter=html"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.4.0",
