@@ -101,6 +101,17 @@ ipcMain.handle('run-test', async (event: any, arg: any) => {
   return successfullRun;
 });
 
+ipcMain.handle('deleteTestCase', async (event: any, arg: any) => {
+  try {
+    console.log('Deleting test case with ID:', arg.testId);
+    const result = await TestServies.deleteTestCase(arg.testId);
+    return result;
+  } catch (error) {
+    console.error('Error in deleteTestCase IPC handler:', error);
+    return { success: false, message: 'IPC handler error: ' + error.message };
+  }
+});
+
 ipcMain.on('anything-asynchronous', (event, arg) => {
   //execute tasks on behalf of renderer process
   // console.log(arg) // prints "ping"

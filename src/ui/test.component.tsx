@@ -14,6 +14,7 @@ interface TestComponentProps {
   testStarted: { [key: string]: boolean };
   selectedUsers: string[];
   handleUserChange: (user: string) => void;
+  onDelete: (testId: string) => void;
 }
 
 const createProjectArray = (selectedUsers: string[]) => {
@@ -45,6 +46,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
   testStarted,
   selectedUsers,
   handleUserChange,
+  onDelete,
 }) => {
   return (
     <tr className="hover:bg-gray-300 hover:text-gray-900 hover:border-gray-900 bg-white border-b dark:bg-gray-800">
@@ -214,27 +216,40 @@ export const TestComponent: React.FC<TestComponentProps> = ({
         </div>
       </td>
       <td className="w-[10%] px-2 py-4 border border-gray-500 2xl:px-6">
-        <button
-          type="button"
-          disabled={testStarted[ele._id]}
-          onClick={() => {
-            setTestStarted({ ...testStarted, [ele._id]: true });
-            window.ipcRender
-              .invoke('run-test', {
-                test: ele.test,
-                id: ele._id,
-                env: selectedEnvs.join(','),
-                preTestId: ele.preTestId,
-                projects: createProjectArray(selectedUsers),
-              })
-              .then((data) => {
-                console.log(data);
-              });
-          }}
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 disabled:bg-slate-400 focus:ring-blue-300 font-medium rounded-lg text-sm w-[80%] px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-        >
-          Run
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            disabled={testStarted[ele._id]}
+            onClick={() => {
+              setTestStarted({ ...testStarted, [ele._id]: true });
+              window.ipcRender
+                .invoke('run-test', {
+                  test: ele.test,
+                  id: ele._id,
+                  env: selectedEnvs.join(','),
+                  preTestId: ele.preTestId,
+                  projects: createProjectArray(selectedUsers),
+                })
+                .then((data) => {
+                  console.log(data);
+                });
+            }}
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 disabled:bg-slate-400 focus:ring-blue-300 font-medium rounded-lg text-sm w-[80%] px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+          >
+            Run
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this test case?')) {
+                onDelete(ele._id);
+              }
+            }}
+            className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm w-[80%] px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+          >
+            Delete
+          </button>
+        </div>
       </td>
     </tr>
   );

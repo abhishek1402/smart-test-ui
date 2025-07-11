@@ -193,6 +193,43 @@ class TestServies {
       });
     } catch (e) {}
   };
+
+  static deleteTestCase = async (testId: string) => {
+    try {
+      console.log('Attempting to delete test case with ID:', testId);
+      
+      // Check if the testId is a valid ObjectId
+      if (!ObjectId.isValid(testId)) {
+        console.error('Invalid ObjectId:', testId);
+        return { success: false, message: 'Invalid test ID format' };
+      }
+      
+      // Ensure database connection is available
+      if (!TEST_COLLECTION) {
+        console.error('Database collection not available');
+        return { success: false, message: 'Database connection error' };
+      }
+      
+      console.log('About to perform delete operation...');
+      const result = await TEST_COLLECTION.deleteOne({
+        _id: new ObjectId(testId),
+      });
+      
+      console.log('Delete operation result:', result);
+      console.log('Deleted count:', result.deletedCount);
+      
+      if (result.deletedCount === 1) {
+        console.log('Test case deleted successfully');
+        return { success: true, message: 'Test case deleted successfully' };
+      } else {
+        console.log('Test case not found');
+        return { success: false, message: 'Test case not found' };
+      }
+    } catch (error) {
+      console.error('Error deleting test case: ', error);
+      return { success: false, message: 'Failed to delete test case: ' + error.message };
+    }
+  };
 }
 
 export default TestServies;

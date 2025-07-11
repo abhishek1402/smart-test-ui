@@ -16,6 +16,32 @@ export const TestLists = () => {
       setTestCases(data);
     });
   }, []);
+  
+  const refreshTestCases = () => {
+    window.ipcRender.invoke('getAllTestCases').then((data) => {
+      setTestCases(data);
+    });
+  };
+  
+  const handleDelete = async (testId: string) => {
+    try {
+     window.ipcRender.invoke('deleteTestCase', { testId }).then(result=>{ 
+        console.log(result)
+        if (result && result.success) {
+          // Refresh the test cases list after successful deletion
+          refreshTestCases();
+          alert('Test case deleted successfully');
+        } else {
+          const message = result?.message || 'Unknown error occurred';
+          alert('Failed to delete test case: ' + message);
+        }
+      });
+    } catch (error) {
+      console.error('Error deleting test case:', error);
+      alert('Error deleting test case: ' + error.message);
+    }
+  };
+  
   useEffect(() => {
     window.ipcRender.on('testRunFailed', (data: { id: string }) => {
       setTestStarted({ ...testStarted, [data.id]: false });
@@ -91,7 +117,7 @@ export const TestLists = () => {
                 scope="col"
                 className="w-[10%] px-6 py-3 border border-gray-500"
               >
-                Run
+                Actions
               </th>
             </tr>
           </thead>
@@ -99,6 +125,7 @@ export const TestLists = () => {
             {testCases.map((ele) => {
               return (
                 <TestComponent
+                  key={ele._id}
                   ele={ele}
                   selectedDevices={selectedDevices}
                   handleDeviceChange={handleDeviceChange}
@@ -110,6 +137,7 @@ export const TestLists = () => {
                   setTestStarted={setTestStarted}
                   selectedUsers={selectedUsers}
                   handleUserChange={handleUserChange}
+                  onDelete={handleDelete}
                 />
               );
             })}
