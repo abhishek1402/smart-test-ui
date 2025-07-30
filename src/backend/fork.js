@@ -45,7 +45,7 @@ process.parentPort.on('message', async (e) => {
       break;
 
     case 'record': {
-      let startUrl;
+      let startUrl = 'https://cleartax-qa-http.internal.cleartax.co/';
       if (e.data.startUrl) {
         startUrl = e.data.startUrl;
       }

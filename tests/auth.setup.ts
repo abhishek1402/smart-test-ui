@@ -28,7 +28,7 @@ roleLogins.forEach((roleLogin) => {
   setup(`authenticate ${roleLogin.roleType}`, async ({ page }) => {
     // Perform authentication steps. Replace these actions with your own.
 
-    await page.goto('https://cleartax-qa-http.internal.cleartax.co/services/');
+    await page.goto('https://cleartax-qa-http.internal.cleartax.co/s/pricing');
     await page.getByRole('button', { name: 'Login/Signup' }).click();
     await page.getByPlaceholder('Enter email').click();
     await page.getByPlaceholder('Enter email').fill(roleLogin.userName);
@@ -41,7 +41,7 @@ roleLogins.forEach((roleLogin) => {
     await page.getByPlaceholder('Password').fill(roleLogin.password);
     await page.getByRole('button', { name: 'Login' }).click();
     await page.waitForURL(
-      'https://cleartax-qa-http.internal.cleartax.co/services/'
+      'https://cleartax-qa-http.internal.cleartax.co/s/pricing'
     );
 
     // End of authentication steps.
