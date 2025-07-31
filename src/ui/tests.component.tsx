@@ -2,6 +2,7 @@ import { highlight, languages } from 'prismjs';
 import React, { useEffect, useState } from 'react';
 import Editor from 'react-simple-code-editor';
 import { TestComponent } from './test.component';
+import { EditModal } from './edit-modal.component';
 export const TestLists = () => {
   const [testCases, setTestCases] = useState([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>(['Desktop']);
@@ -11,6 +12,8 @@ export const TestLists = () => {
   const [selectedEnvs, setSelectedEnvs] = useState<string[]>(['Dev']);
   const [selectedUsers, setSelectedUsers] = useState<string[]>(['USER']);
   const [testStarted, setTestStarted] = useState<Record<string, boolean>>({});
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string } | null>(null);
   useEffect(() => {
     window.ipcRender.invoke('getAllTestCases').then((data) => {
       setTestCases(data);
@@ -25,7 +28,7 @@ export const TestLists = () => {
   
   const handleDelete = async (testId: string) => {
     try {
-     window.ipcRender.invoke('deleteTestCase', { testId }).then(result=>{ 
+     window.ipcRender.invoke('deleteTestCase', { testId }).then(result=>{
         console.log(result)
         if (result && result.success) {
           // Refresh the test cases list after successful deletion
@@ -40,6 +43,38 @@ export const TestLists = () => {
       console.error('Error deleting test case:', error);
       alert('Error deleting test case: ' + error.message);
     }
+  };
+
+  const handleUpdate = async (testId: string, updatedData: { name?: string; test?: string }): Promise<void> => {
+    try {
+      const result = await window.ipcRender.invoke('updateTestCase', { testId, updatedData });
+      if (!result) {
+        throw new Error('No result returned from IPC handler');
+      }
+      
+      if (result && result.success === true) {
+        refreshTestCases();
+        alert('Test case updated successfully!');
+      } else {
+        const message = result?.message || 'Failed to save test case';
+        alert(message);
+        throw new Error(message);
+      }
+    } catch (error) {
+      console.error('Error updating test case:', error);
+      alert('Error updating test case: ' + (error instanceof Error ? error.message : String(error)));
+      throw error; 
+    }
+  };
+
+  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string }) => {
+    setEditingTestCase(testCase);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsEditModalOpen(false);
+    setEditingTestCase(null);
   };
   
   useEffect(() => {
@@ -138,12 +173,20 @@ export const TestLists = () => {
                   selectedUsers={selectedUsers}
                   handleUserChange={handleUserChange}
                   onDelete={handleDelete}
+                  onEdit={handleEdit}
                 />
               );
             })}
           </tbody>
         </table>
       </div>
+      
+      <EditModal
+        isOpen={isEditModalOpen}
+        testCase={editingTestCase}
+        onClose={handleCloseModal}
+        onSave={handleUpdate}
+      />
     </div>
   );
 };

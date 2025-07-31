@@ -230,6 +230,52 @@ class TestServies {
       return { success: false, message: 'Failed to delete test case: ' + error.message };
     }
   };
+
+  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string }) => {
+    try {
+      if (!testId) {
+        const result = { success: false, message: 'Test ID is required' };
+        console.log('Returning result:', result);
+        return result;
+      }
+      
+      if (!ObjectId.isValid(testId)) {
+        const result = { success: false, message: 'Invalid test ID format' };
+        console.log('Returning result:', result);
+        return result;
+      }
+      
+      const updateFields: any = {};
+      if (updatedData.name !== undefined) updateFields.name = updatedData.name;
+      if (updatedData.test !== undefined) updateFields.test = updatedData.test;
+      if (updatedData.preTestId !== undefined) updateFields.preTestId = updatedData.preTestId;
+      
+      if (Object.keys(updateFields).length === 0) {
+        const result = { success: false, message: 'No fields to update' };
+        console.log('Returning result:', result);
+        return result;
+      }
+      
+      const result = await TEST_COLLECTION.updateOne(
+        { _id: new ObjectId(testId) },
+        { $set: updateFields }
+      );
+      
+      if (result.matchedCount > 0) {
+        const successResult = { success: true, message: 'Test case updated successfully' };
+        return successResult;
+      } else {
+        const failResult = { success: false, message: 'Test case not found' };
+        return failResult;
+      }
+      
+    } catch (error) {
+      console.error('Error:', error);
+      const errorResult = { success: false, message: `Database error: ${error.message}` };
+      console.log('=== ERROR - Returning result:', errorResult);
+      return errorResult;
+    }
+  };
 }
 
 export default TestServies;

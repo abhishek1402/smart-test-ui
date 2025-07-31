@@ -112,6 +112,44 @@ ipcMain.handle('deleteTestCase', async (event: any, arg: any) => {
   }
 });
 
+ipcMain.handle('updateTestCase', async (event: any, arg: any) => {
+  try {
+    if (!arg) {
+      console.error('No arguments provided in IPC call');
+      return { success: false, message: 'No arguments provided' };
+    }
+    
+    if (!arg.testId) {
+      console.error('No testId provided in IPC call');
+      return { success: false, message: 'Test ID is required' };
+    }
+    
+    if (!arg.updatedData) {
+      console.error('No updatedData provided in IPC call');
+      return { success: false, message: 'Updated data is required' };
+    }
+    
+    const result = await TestServies.updateTestCase(arg.testId, arg.updatedData);
+    console.log('Backend method completed with result:', result);
+    
+    if (!result) {
+      console.error('Backend returned null/undefined result');
+      return { success: false, message: 'Backend returned no result' };
+    }
+    
+    return result;
+    
+  } catch (error) {
+    console.error('Full error object:', error);
+    
+    const errorResult = {
+      success: false,
+      message: `IPC handler error: ${error?.message || error?.toString() || 'Unknown IPC error'}`
+    };
+    return errorResult;
+  }
+});
+
 ipcMain.on('anything-asynchronous', (event, arg) => {
   //execute tasks on behalf of renderer process
   // console.log(arg) // prints "ping"
