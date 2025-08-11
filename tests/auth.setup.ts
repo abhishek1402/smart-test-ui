@@ -7,8 +7,8 @@ const role3AuthFile = path.join(__dirname, '../playwright/.auth/role3.json');
 const roleLogins = [
   {
     roleType: 'user',
-    userName: 'puneeth.kumar+test@clear.in',
-    password: 'Kumar@#7675',
+    userName: 'fadem62741@cotasen.com',
+    password: 'Fadem62741@',
     authFile: role1AuthFile,
   },
   {
