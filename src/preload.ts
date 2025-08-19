@@ -16,8 +16,9 @@ const ipc = {
           'recordTest',
           'getAllTestCases',
           "recordTestOnLocal",
-          "run-test"
-
+          "run-test",
+          "deleteTestCase",
+          "updateTestCase"
         ]
     }
 };
