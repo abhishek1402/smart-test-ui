@@ -108,10 +108,25 @@ export const TestLists = () => {
   };
   return (
     <div className="p-5">
+      {/* Add count display */}
+      <div className="mb-4 flex justify-between items-center">
+        <h2 className="text-xl font-bold text-gray-900">Test Cases</h2>
+        <div className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-lg">
+          Total: {testCases.length} test case{testCases.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+      
       <div className="relative overflow-x-auto">
         <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-900 uppercase bg-[#f8fbff] dark:bg-[#f8fbff] dark:text-gray-900">
             <tr>
+              {/* Add Serial Number column */}
+              <th
+                scope="col"
+                className="w-[5%] px-6 py-3 border border-gray-500"
+              >
+                Sl.No
+              </th>
               <th
                 scope="col"
                 className="w-[10%] px-6 py-3 border border-gray-500"
@@ -120,7 +135,7 @@ export const TestLists = () => {
               </th>
               <th
                 scope="col"
-                className="w-[40%] px-6 py-3 border border-gray-500"
+                className="w-[35%] px-6 py-3 border border-gray-500"
               >
                 Test Cases
               </th>
@@ -157,11 +172,12 @@ export const TestLists = () => {
             </tr>
           </thead>
           <tbody>
-            {testCases.map((ele) => {
+            {testCases.map((ele, index) => {
               return (
                 <TestComponent
                   key={ele._id}
                   ele={ele}
+                  serialNumber={index + 1}
                   selectedDevices={selectedDevices}
                   handleDeviceChange={handleDeviceChange}
                   selectedBrowsers={selectedBrowsers}

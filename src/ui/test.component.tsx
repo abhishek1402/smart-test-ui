@@ -4,6 +4,7 @@ import Editor from 'react-simple-code-editor';
 
 interface TestComponentProps {
   ele: { name: string; test: string; _id: string; preTestId: string };
+  serialNumber: number;
   selectedDevices: string[];
   handleDeviceChange: (device: string) => void;
   selectedBrowsers: string[];
@@ -37,6 +38,7 @@ const createProjectArray = (selectedUsers: string[]) => {
 
 export const TestComponent: React.FC<TestComponentProps> = ({
   ele,
+  serialNumber,
   selectedDevices,
   handleDeviceChange,
   selectedBrowsers,
@@ -52,11 +54,14 @@ export const TestComponent: React.FC<TestComponentProps> = ({
 }) => {
   return (
     <tr className="hover:bg-gray-300 hover:text-gray-900 hover:border-gray-900 bg-white border-b dark:bg-gray-800">
+      <td className="w-[5%] px-6 py-4 border border-gray-500 text-center font-semibold">
+        {serialNumber}
+      </td>
       <td className="w-[10%] px-6 py-4 border border-gray-500 uppercase font-bold">
         {ele.name}
       </td>
 
-      <td className="w-[40%] px-6 py-4 border border-gray-500">
+      <td className="w-[35%] px-6 py-4 border border-gray-500">
         <div className="h-[200px] overflow-y-auto sm:max-w-[380px] md:max-w-[510px] lg:max-w-[550px] xl:max-w-[650px] 2xl:max-w-[800px]">
           <Editor
             className=""
