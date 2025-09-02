@@ -4,6 +4,7 @@ import {  Route, Routes } from "react-router-dom";
 import { Layout } from "./ui/layout.component";
 import { TestLists } from "./ui/tests.component";
 import { RecordTest } from "./ui/record-test.component";
+import { TrashComponent } from "./ui/trash.component";
 export const App = () => {
   console.log(">>>>>Routeing>>>>")
   return (
@@ -13,6 +14,7 @@ export const App = () => {
           <Route index element={<TestLists />} />
           <Route path="tests" element={<TestLists />} />
           <Route path="record" element={<RecordTest />} />
+          <Route path="trash" element={<TrashComponent />} />
           {/* <Route render={() => <Redirect to="/"/>}/> */}
           {/* Using path="*"" means "match anything", so this route
                 acts like a catch-all for URLs that we don't have explicit

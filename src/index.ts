@@ -37,7 +37,24 @@ const createWindow = async () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', () => {
+  createWindow();
+  
+  // Start periodic cleanup of expired trash items (runs every 24 hours)
+  const cleanupInterval = setInterval(async () => {
+    try {
+      const result = await TestServies.cleanupExpiredTrashItems();
+      console.log('Automatic trash cleanup completed:', result);
+    } catch (error) {
+      console.error('Error during automatic trash cleanup:', error);
+    }
+  }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+  // Clean up interval when app is quitting
+  app.on('before-quit', () => {
+    clearInterval(cleanupInterval);
+  });
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
@@ -63,7 +80,8 @@ ipcMain.handle(
       testCase,
       name,
       preTestId,
-    }: { testCase: string; name: string; preTestId: string }
+      mode,
+    }: { testCase: string; name: string; preTestId: string; mode: string }
   ) => {
     // mainWindow.webContents.send('test123',"sdfsfd");
 
@@ -72,6 +90,7 @@ ipcMain.handle(
       testCase,
       name,
       preTestId,
+      mode,
     });
     return 'abhishek';
   }
@@ -83,6 +102,7 @@ ipcMain.handle('recordTestOnLocal', async (event: any, arg: any) => {
   const testCases = await TestServies.recordTestCaseOnLocal({
     mainWindow,
     preTestId: arg.preTestId,
+    mode: arg.mode,
   });
   return 'abhishek';
 });
@@ -147,6 +167,60 @@ ipcMain.handle('updateTestCase', async (event: any, arg: any) => {
       message: `IPC handler error: ${error?.message || error?.toString() || 'Unknown IPC error'}`
     };
     return errorResult;
+  }
+});
+
+// Trash functionality IPC handlers
+ipcMain.handle('getAllTrashItems', async (event: any, arg: any) => {
+  try {
+    const trashItems = await TestServies.getAllTrashItems();
+    return trashItems;
+  } catch (error) {
+    console.error('Error in getAllTrashItems IPC handler:', error);
+    return [];
+  }
+});
+
+ipcMain.handle('restoreTestCase', async (event: any, arg: any) => {
+  try {
+    console.log('Restoring test case with ID:', arg.trashId);
+    const result = await TestServies.restoreTestCase(arg.trashId);
+    return result;
+  } catch (error) {
+    console.error('Error in restoreTestCase IPC handler:', error);
+    return { success: false, message: 'IPC handler error: ' + error.message };
+  }
+});
+
+ipcMain.handle('permanentDeleteTestCase', async (event: any, arg: any) => {
+  try {
+    console.log('Permanently deleting test case with ID:', arg.trashId);
+    const result = await TestServies.permanentDeleteTestCase(arg.trashId);
+    return result;
+  } catch (error) {
+    console.error('Error in permanentDeleteTestCase IPC handler:', error);
+    return { success: false, message: 'IPC handler error: ' + error.message };
+  }
+});
+
+ipcMain.handle('cleanupExpiredTrashItems', async (event: any, arg: any) => {
+  try {
+    const result = await TestServies.cleanupExpiredTrashItems();
+    return result;
+  } catch (error) {
+    console.error('Error in cleanupExpiredTrashItems IPC handler:', error);
+    return { success: false, message: 'IPC handler error: ' + error.message };
+  }
+});
+
+ipcMain.handle('deleteAllTrashItems', async (event: any, arg: any) => {
+  try {
+    console.log('Deleting all trash items via IPC...');
+    const result = await TestServies.deleteAllTrashItems();
+    return result;
+  } catch (error) {
+    console.error('Error in deleteAllTrashItems IPC handler:', error);
+    return { success: false, message: 'IPC handler error: ' + error.message };
   }
 });
 

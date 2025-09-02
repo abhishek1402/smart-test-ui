@@ -18,7 +18,12 @@ const ipc = {
           "recordTestOnLocal",
           "run-test",
           "deleteTestCase",
-          "updateTestCase"
+          "updateTestCase",
+          "getAllTrashItems",
+          "restoreTestCase",
+          "permanentDeleteTestCase",
+          "cleanupExpiredTrashItems",
+          "deleteAllTrashItems"
         ]
     }
 };
@@ -35,7 +40,7 @@ contextBridge.exposeInMainWorld(
         sendMessage(channel: Channels, ...args: unknown[]) {
           ipcRenderer.send(channel, ...args);
         },
-        on(channel: Channels, func: (...args: unknown[]) => void) {
+        on(channel: string, func: (...args: unknown[]) => void) {
           const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
             func(...args);
           ipcRenderer.on(channel, subscription);

@@ -50,22 +50,24 @@ process.parentPort.on('message', async (e) => {
         startUrl = e.data.startUrl;
       }
       console.log('record start url', startUrl);
+      
+      // Use role1.json for consistent authentication across both DIY and AF modes
+      // role1.json is set up with QA environment authentication
+      const authFile = 'playwright/.auth/role1.json';
+      
       try {
-        console.log('>RECIRDstart>>>>>');
+        console.log('>RECIRDstart>>>>> using auth file:', authFile);
         const output = execSync(
-          `npx playwright codegen -o test.spec.js --load-storage=playwright/.auth/user.json ${startUrl}`
+          `npx playwright codegen -o test.spec.js --load-storage=${authFile} ${startUrl}`
         );
         const filePath = path.join(rootDir, 'test.spec.js');
         const data = fs.readFileSync(filePath, 'utf8');
         console.log('recordFork.js', data);
         process.parentPort.postMessage(data);
       } catch (e) {
+        console.error('Recording failed:', e);
         process.exit();
       }
-      // const data = fs.readFileSync(filePath, 'utf8');
-      // var bodyJson = JSON.stringify(data)
-
-      //    await TEST_COLLECTION.insertOne({test:data});
 
       process.exit();
     }
