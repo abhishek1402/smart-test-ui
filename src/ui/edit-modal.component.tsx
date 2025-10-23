@@ -4,9 +4,9 @@ import Editor from 'react-simple-code-editor';
 
 interface EditModalProps {
   isOpen: boolean;
-  testCase: { name: string; test: string; _id: string; preTestId: string } | null;
+  testCase: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean } | null;
   onClose: () => void;
-  onSave: (testId: string, updatedData: { name?: string; test?: string }) => Promise<void>;
+  onSave: (testId: string, updatedData: { name?: string; test?: string; runForIntegration?: boolean }) => Promise<void>;
 }
 
 export const EditModal: React.FC<EditModalProps> = ({
@@ -17,12 +17,14 @@ export const EditModal: React.FC<EditModalProps> = ({
 }) => {
   const [editedName, setEditedName] = useState('');
   const [editedTest, setEditedTest] = useState('');
+  const [runForIntegration, setRunForIntegration] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (testCase) {
       setEditedName(testCase.name);
       setEditedTest(testCase.test);
+      setRunForIntegration(testCase.runForIntegration !== false);
     }
   }, [testCase]);
 
@@ -33,7 +35,8 @@ export const EditModal: React.FC<EditModalProps> = ({
     try {
       const updatedData = {
         name: editedName,
-        test: editedTest
+        test: editedTest,
+        runForIntegration: runForIntegration
       };
       
       await onSave(testCase._id, updatedData);
@@ -49,6 +52,7 @@ export const EditModal: React.FC<EditModalProps> = ({
     if (testCase) {
       setEditedName(testCase.name);
       setEditedTest(testCase.test);
+      setRunForIntegration(testCase.runForIntegration !== false);
     }
     onClose();
   };
@@ -84,6 +88,18 @@ export const EditModal: React.FC<EditModalProps> = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter test case name"
             />
+          </div>
+          
+          <div className="mb-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={runForIntegration}
+                onChange={(e) => setRunForIntegration(e.target.checked)}
+                className="mr-2"
+              />
+              <span className="text-sm font-medium text-gray-700">Run for Integration Testing</span>
+            </label>
           </div>
           
           <div className="flex-1 flex flex-col">

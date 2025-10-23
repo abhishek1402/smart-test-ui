@@ -3,7 +3,7 @@ import { highlight, languages } from 'prismjs';
 import Editor from 'react-simple-code-editor';
 
 interface TestComponentProps {
-  ele: { name: string; test: string; _id: string; preTestId: string };
+  ele: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean };
   serialNumber: number;
   selectedDevices: string[];
   handleDeviceChange: (device: string) => void;
@@ -16,7 +16,7 @@ interface TestComponentProps {
   selectedUsers: string[];
   handleUserChange: (user: string) => void;
   onDelete: (testId: string) => void;
-  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string }) => void;
+  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean }) => void;
 }
 
 const createProjectArray = (selectedUsers: string[]) => {
@@ -220,6 +220,11 @@ export const TestComponent: React.FC<TestComponentProps> = ({
             />
             SP
           </label>
+        </div>
+      </td>
+      <td className="w-[10%] px-6 py-4 border border-gray-500 text-center">
+        <div className={`font-semibold ${ele.runForIntegration !== false ? 'text-green-600' : 'text-red-600'}`}>
+          {ele.runForIntegration !== false ? 'Yes' : 'No'}
         </div>
       </td>
       <td className="w-[10%] px-2 py-4 border border-gray-500 2xl:px-6">

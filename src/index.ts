@@ -63,7 +63,8 @@ ipcMain.handle(
       testCase,
       name,
       preTestId,
-    }: { testCase: string; name: string; preTestId: string }
+      runForIntegration,
+    }: { testCase: string; name: string; preTestId: string; runForIntegration?: boolean }
   ) => {
     // mainWindow.webContents.send('test123',"sdfsfd");
 
@@ -72,6 +73,7 @@ ipcMain.handle(
       testCase,
       name,
       preTestId,
+      runForIntegration,
     });
     return 'abhishek';
   }

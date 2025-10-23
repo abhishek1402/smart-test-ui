@@ -53,7 +53,7 @@ process.parentPort.on('message', async (e) => {
       try {
         console.log('>RECIRDstart>>>>>');
         const output = execSync(
-          `npx playwright codegen -o test.spec.js --load-storage=playwright/.auth/user.json ${startUrl}`
+          `npx playwright codegen -o test.spec.js --load-storage=.auth/user.json ${startUrl}`
         );
         const filePath = path.join(rootDir, 'test.spec.js');
         const data = fs.readFileSync(filePath, 'utf8');
