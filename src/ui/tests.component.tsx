@@ -13,7 +13,7 @@ export const TestLists = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>(['USER']);
   const [testStarted, setTestStarted] = useState<Record<string, boolean>>({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string; mode?: string } | null>(null);
+  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string } | null>(null);
   useEffect(() => {
     window.ipcRender.invoke('getAllTestCases').then((data) => {
       setTestCases(data);
@@ -45,7 +45,7 @@ export const TestLists = () => {
     }
   };
 
-  const handleUpdate = async (testId: string, updatedData: { name?: string; test?: string }): Promise<void> => {
+  const handleUpdate = async (testId: string, updatedData: { name?: string; test?: string; runForIntegration?: boolean }): Promise<void> => {
     try {
       const result = await window.ipcRender.invoke('updateTestCase', { testId, updatedData });
       if (!result) {
@@ -67,7 +67,7 @@ export const TestLists = () => {
     }
   };
 
-  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string; mode?: string }) => {
+  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string }) => {
     setEditingTestCase(testCase);
     setIsEditModalOpen(true);
   };
@@ -139,7 +139,7 @@ export const TestLists = () => {
               </th>
               <th
                 scope="col"
-                className="w-[35%] px-6 py-3 border border-gray-500"
+                className="w-[25%] px-6 py-3 border border-gray-500"
               >
                 Test Cases
               </th>
@@ -166,6 +166,12 @@ export const TestLists = () => {
                 className="w-[10%] px-6 py-3 border border-gray-500"
               >
                 Users
+              </th>
+              <th
+                scope="col"
+                className="w-[10%] px-6 py-3 border border-gray-500"
+              >
+                Integration
               </th>
               <th
                 scope="col"

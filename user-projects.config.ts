@@ -5,7 +5,7 @@ const role1Projects = [
     name: 'chrome-role1',
     use: {
       ...devices['Desktop Chrome'],
-      storageState: 'playwright/.auth/role1.json',
+      storageState: '.auth/role1.json',
     },
     // dependencies: ['setup'],
   },
@@ -13,7 +13,7 @@ const role1Projects = [
     name: 'firefox-role1',
     use: {
       ...devices['Desktop Safari'],
-      storageState: 'playwright/.auth/role1.json',
+      storageState: '.auth/role1.json',
     },
     // dependencies: ['setup'],
   },
@@ -23,7 +23,7 @@ const role2Projects = [
     name: 'chrome-role2',
     use: {
       ...devices['Desktop Chrome'],
-      storageState: 'playwright/.auth/role2.json',
+      storageState: '.auth/role2.json',
     },
     // dependencies: ['setup'],
   },
@@ -31,7 +31,7 @@ const role2Projects = [
     name: 'firefox-role2',
     use: {
       ...devices['Desktop Safari'],
-      storageState: 'playwright/.auth/role2.json',
+      storageState: '.auth/role2.json',
     },
   },
 ];
@@ -40,7 +40,7 @@ const role3Projects = [
     name: 'chrome-role3',
     use: {
       ...devices['Desktop Chrome'],
-      storageState: 'playwright/.auth/role3.json',
+      storageState: '.auth/role3.json',
     },
     // dependencies: ['setup'],
   },
@@ -48,7 +48,7 @@ const role3Projects = [
     name: 'firefox-role3',
     use: {
       ...devices['Desktop Safari'],
-      storageState: 'playwright/.auth/role3.json',
+      storageState: '.auth/role3.json',
     },
     // dependencies: ['setup'],
   },

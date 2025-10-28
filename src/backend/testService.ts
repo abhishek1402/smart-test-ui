@@ -121,12 +121,14 @@ class TestServies {
     name,
     preTestId,
     mode,
+    runForIntegration = true,
   }: {
     mainWindow: BrowserWindow;
     testCase: string;
     name: string;
     preTestId: string;
     mode: string;
+    runForIntegration?: boolean;
   }) => {
     try {
       console.log('Record full TEST case preTestId', preTestId);
@@ -137,6 +139,7 @@ class TestServies {
         mode: mode,
         deleted: false,
         createdAt: new Date(),
+        runForIntegration: runForIntegration,
       });
       return { success: true };
     } catch (e) {
@@ -352,7 +355,7 @@ class TestServies {
     }
   };
 
-  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string; mode?: string }) => {
+  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string; runForIntegration?: boolean , mode?: string }) => {
     try {
       if (!testId) {
         const result = { success: false, message: 'Test ID is required' };
@@ -371,6 +374,7 @@ class TestServies {
       if (updatedData.test !== undefined) updateFields.test = updatedData.test;
       if (updatedData.preTestId !== undefined) updateFields.preTestId = updatedData.preTestId;
       if (updatedData.mode !== undefined) updateFields.mode = updatedData.mode;
+      if (updatedData.runForIntegration !== undefined) updateFields.runForIntegration = updatedData.runForIntegration;
       
       if (Object.keys(updateFields).length === 0) {
         const result = { success: false, message: 'No fields to update' };

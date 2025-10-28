@@ -1,9 +1,9 @@
 import { test as setup } from '@playwright/test';
 import path from 'path';
 
-const role1AuthFile = path.join(__dirname, '../playwright/.auth/role1.json');
-const role2AuthFile = path.join(__dirname, '../playwright/.auth/role2.json');
-const role3AuthFile = path.join(__dirname, '../playwright/.auth/role3.json');
+const role1AuthFile = path.join(__dirname, '../.auth/role1.json');
+const role2AuthFile = path.join(__dirname, '../.auth/role2.json');
+const role3AuthFile = path.join(__dirname, '../.auth/role3.json');
 const roleLogins = [
   {
     roleType: 'user',
