@@ -5,6 +5,7 @@ import { execSync } from 'child_process';
 import { BrowserWindow, ipcMain, utilityProcess } from 'electron';
 import { test } from 'node:test';
 import { ObjectId } from 'mongodb';
+import { playwrightConverter } from './playwrightToSteps';
 
 const currentDir = __dirname; //will be inside webpack
 
@@ -80,6 +81,7 @@ class TestServies {
       env: 'Dev' | 'Qa' | 'Prod';
       preTestId: string;
       projects: string[];
+      format?: string;
     };
     mainWindow: BrowserWindow;
   }) => {
@@ -87,6 +89,9 @@ class TestServies {
       const preTestChain = await TestServies.getPreTestChain(
         testCase.preTestId
       );
+      
+      // The .steps format is now actual Playwright code with test.step() wrappers
+      // No conversion needed - can run directly
       preTestChain.push(testCase.test); // Add the final test
 
       for (let i = 0; i < preTestChain.length; i++) {
@@ -122,6 +127,7 @@ class TestServies {
     preTestId,
     mode,
     runForIntegration = true,
+    isStepsFormat = false,
   }: {
     mainWindow: BrowserWindow;
     testCase: string;
@@ -129,17 +135,22 @@ class TestServies {
     preTestId: string;
     mode: string;
     runForIntegration?: boolean;
+    isStepsFormat?: boolean;
   }) => {
     try {
       console.log('Record full TEST case preTestId', preTestId);
+      console.log('Is Steps Format:', isStepsFormat);
+      
+      // Save the test case as-is (either Playwright or .steps format)
       const test = await TEST_COLLECTION.insertOne({
-        test: testCase,
+        test: testCase, // Save the .steps format directly
         name: name,
         preTestId: preTestId,
         mode: mode,
         deleted: false,
         createdAt: new Date(),
         runForIntegration: runForIntegration,
+        format: isStepsFormat ? 'steps' : 'playwright', // Track the format
       });
       return { success: true };
     } catch (e) {

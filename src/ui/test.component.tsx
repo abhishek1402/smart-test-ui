@@ -4,7 +4,7 @@ import Editor from 'react-simple-code-editor';
 import { MODES } from './record-test.component';
 
 interface TestComponentProps {
-  ele: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string };
+  ele: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string };
   serialNumber: number;
   selectedDevices: string[];
   handleDeviceChange: (device: string) => void;
@@ -17,7 +17,7 @@ interface TestComponentProps {
   selectedUsers: string[];
   handleUserChange: (user: string) => void;
   onDelete: (testId: string) => void;
-  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string;runForIntegration?: boolean, mode?: string }) => void;
+  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string;runForIntegration?: boolean, mode?: string, format?: string }) => void;
 }
 
 const createProjectArray = (selectedUsers: string[]) => {
@@ -251,6 +251,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
                   env: selectedEnvs.join(','),
                   preTestId: ele.preTestId,
                   projects: createProjectArray(selectedUsers),
+                  format: ele.format,
                 })
                 .then((data) => {
                   console.log(data);

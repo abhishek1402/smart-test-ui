@@ -15,6 +15,7 @@ export const RecordTest = () => {
   const [preTestId, setPreTestId] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
   const [selectedOption, setSelectedOption] = useState(''); // DIY or AF
+  const [stepsFormat, setStepsFormat] = useState(null); // Store the .steps format data
 
   const [isLoading, setIsLoading] = useState(false);
   useEffect(() => {
@@ -25,7 +26,10 @@ export const RecordTest = () => {
   useEffect(() => {
     window.ipcRender.on('testRecoredOnLocal', (data: { test: string }) => {
       setIsLoading(false);
+      // The data.test now contains the .steps format display string
       setTestCase(data.test);
+      // We'll need to store the original format for conversion back to Playwright
+      // For now, we'll handle this in the save process
     });
   }, []);
 
@@ -127,10 +131,15 @@ export const RecordTest = () => {
       </div>
       {testCase && !isSaved && (
         <div className="mt-12">
-          <p className="text-base font-medium text-slate-600 border-t border-slate-200 pt-4 mb-4">
-            Test Case Generated:
-          </p>
-          <div className="max-h-[500px] overflow-scroll  mb-4">
+          <div className="flex items-center justify-between border-t border-slate-200 pt-4 mb-4">
+            <p className="text-base font-medium text-slate-600">
+              Test Case Generated (with test.step() wrappers):
+            </p>
+            <div className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+              Playwright with test.step()
+            </div>
+          </div>
+          <div className="max-h-[500px] overflow-scroll mb-4">
             <Editor
               className=""
               value={testCase}
@@ -150,12 +159,14 @@ export const RecordTest = () => {
             disabled={isLoading || isSaved}
             onClick={() => {
               setIsLoading(true);
+              // Send the .steps format to be converted back to Playwright and saved
               window.ipcRender
                 .invoke('recordTest', {
                   name: testName,
-                  testCase: testCase,
+                  testCase: testCase, // This is the .steps format
                   preTestId: preTestId,
                   mode: selectedOption,
+                  isStepsFormat: true, // Flag to indicate this is .steps format
                 })
                 .then((data) => {
                   setTimeout(() => {
@@ -165,7 +176,7 @@ export const RecordTest = () => {
                 });
             }}
           >
-            Save
+            Save (test.step Format)
           </button>
           {isSaved && (
             <p className="text-base font-medium text-green-600 my-4">

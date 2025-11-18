@@ -13,7 +13,7 @@ export const TestLists = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>(['USER']);
   const [testStarted, setTestStarted] = useState<Record<string, boolean>>({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string } | null>(null);
+  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string } | null>(null);
   useEffect(() => {
     window.ipcRender.invoke('getAllTestCases').then((data) => {
       setTestCases(data);
@@ -67,7 +67,7 @@ export const TestLists = () => {
     }
   };
 
-  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string }) => {
+  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string }) => {
     setEditingTestCase(testCase);
     setIsEditModalOpen(true);
   };
