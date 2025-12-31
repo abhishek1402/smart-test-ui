@@ -145,6 +145,12 @@ export const TestLists = () => {
               </th>
               <th
                 scope="col"
+                className="w-[25%] px-6 py-3 border border-gray-500"
+              >
+                Manual Test Cases
+              </th>
+              <th
+                scope="col"
                 className="w-[10%] px-6 py-3 border border-gray-500"
               >
                 Device

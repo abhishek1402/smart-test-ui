@@ -3,7 +3,6 @@ import DataBase from './mongoClient';
 import fs from 'fs';
 import { execSync } from 'child_process';
 import { BrowserWindow, ipcMain, utilityProcess } from 'electron';
-import { test } from 'node:test';
 import { ObjectId } from 'mongodb';
 import { playwrightConverter } from './playwrightToSteps';
 
@@ -94,6 +93,9 @@ class TestServies {
       // No conversion needed - can run directly
       preTestChain.push(testCase.test); // Add the final test
 
+      let testPassed = true;
+      let testError = null;
+
       for (let i = 0; i < preTestChain.length; i++) {
         const testScript = preTestChain[i];
         const child = utilityProcess.fork(path.join(__dirname, 'fork.js'));
@@ -108,15 +110,41 @@ class TestServies {
             if (code === 0) {
               resolve(true);
             } else {
+              testPassed = false;
+              testError = `Test execution failed with exit code: ${code}`;
               mainWindow.webContents.send('testRunFailed', { id: testCase.id });
               reject(new Error('Test run failed'));
             }
           });
         });
       }
+
+      // Update manual test case statuses based on test execution result
+      console.log('=== UPDATING MANUAL TEST CASE STATUSES ===');
+      console.log('Test ID:', testCase.id);
+      console.log('Test Passed:', testPassed);
+      console.log('Test Error:', testError);
+      
+      const updateResult = await TestServies.updateManualTestCaseStatusesAfterExecution(testCase.id, testPassed, testError);
+      console.log('=== UPDATE RESULT ===', updateResult);
+      
+      // Send success notification to frontend
+      if (testPassed) {
+        console.log('=== SENDING SUCCESS EVENT TO FRONTEND ===');
+        mainWindow.webContents.send('testRunSuccess', { id: testCase.id });
+      }
+
     } catch (err) {
       console.error('Error running test case: ', err);
       mainWindow.webContents.send('testRunFailed', { id: testCase.id });
+      
+      // Update manual test case statuses to reflect failure
+      console.log('=== UPDATING MANUAL TEST CASE STATUSES (ERROR CASE) ===');
+      console.log('Test ID:', testCase.id);
+      console.log('Error:', err.message);
+      
+      const updateResult = await TestServies.updateManualTestCaseStatusesAfterExecution(testCase.id, false, err.message);
+      console.log('=== UPDATE RESULT (ERROR CASE) ===', updateResult);
     }
   };
 
@@ -152,6 +180,7 @@ class TestServies {
         runForIntegration: runForIntegration,
         format: isStepsFormat ? 'steps' : 'playwright', // Track the format
       });
+
       return { success: true };
     } catch (e) {
       console.error('Error recording test case: ', e);
@@ -172,7 +201,7 @@ class TestServies {
       
       // Set default URLs based on mode
       const defaultUrls = {
-        DIY: 'https://cleartax-qa-http.internal.cleartax.co/entity',
+        DIY: 'https://cleartax-qa-http.internal.cleartax.co/filing/itr-filings',
         AF: 'https://cleartax-qa-http.internal.cleartax.co/s/pricing'
       };
       
@@ -366,7 +395,7 @@ class TestServies {
     }
   };
 
-  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string; runForIntegration?: boolean , mode?: string }) => {
+  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string; runForIntegration?: boolean , mode?: string; manualTestCases?: any; manualTestCasesGeneratedAt?: any; testScriptHash?: string }) => {
     try {
       if (!testId) {
         const result = { success: false, message: 'Test ID is required' };
@@ -386,6 +415,9 @@ class TestServies {
       if (updatedData.preTestId !== undefined) updateFields.preTestId = updatedData.preTestId;
       if (updatedData.mode !== undefined) updateFields.mode = updatedData.mode;
       if (updatedData.runForIntegration !== undefined) updateFields.runForIntegration = updatedData.runForIntegration;
+      if (updatedData.manualTestCases !== undefined) updateFields.manualTestCases = updatedData.manualTestCases;
+      if (updatedData.manualTestCasesGeneratedAt !== undefined) updateFields.manualTestCasesGeneratedAt = updatedData.manualTestCasesGeneratedAt;
+      if (updatedData.testScriptHash !== undefined) updateFields.testScriptHash = updatedData.testScriptHash;
       
       if (Object.keys(updateFields).length === 0) {
         const result = { success: false, message: 'No fields to update' };
@@ -411,6 +443,381 @@ class TestServies {
       const errorResult = { success: false, message: `Database error: ${error.message}` };
       console.log('=== ERROR - Returning result:', errorResult);
       return errorResult;
+    }
+  };
+
+  /**
+   * Add manual test cases directly to the test case document
+   */
+  static addManualTestCasesToTestCase = async (testId: string, manualTestCases: any[]) => {
+    try {
+      console.log('Adding manual test cases to test case:', testId);
+      
+      if (!ObjectId.isValid(testId)) {
+        return { success: false, message: 'Invalid test ID format' };
+      }
+      
+      // Get existing test case to preserve manual status changes
+      const existingTestCase = await TEST_COLLECTION.findOne({ _id: new ObjectId(testId) });
+      
+      let finalManualTestCases = manualTestCases;
+      
+      // If there are existing manual test cases, preserve their statuses
+      if (existingTestCase && existingTestCase.manualTestCases && existingTestCase.manualTestCases.length > 0) {
+        console.log('=== PRESERVING EXISTING MANUAL STATUS CHANGES ===');
+        console.log('Existing test cases:', existingTestCase.manualTestCases.length);
+        console.log('New test cases:', manualTestCases.length);
+        
+        // Create a map of existing statuses by testCaseId
+        const existingStatusMap = new Map();
+        existingTestCase.manualTestCases.forEach((tc: any) => {
+          existingStatusMap.set(tc.testCaseId, {
+            status: tc.status,
+            updatedAt: tc.updatedAt,
+            lastExecutionResult: tc.lastExecutionResult,
+            executionHistory: tc.executionHistory,
+            lastAutoUpdate: tc.lastAutoUpdate,
+            autoUpdated: tc.autoUpdated
+          });
+        });
+        
+        // Merge existing statuses with new test cases
+        finalManualTestCases = manualTestCases.map((newTc: any) => {
+          const existingData = existingStatusMap.get(newTc.testCaseId);
+          if (existingData) {
+            console.log(`=== PRESERVING STATUS: ${newTc.testCaseId} = ${existingData.status} ===`);
+            return {
+              ...newTc,
+              status: existingData.status, // Preserve existing status
+              updatedAt: existingData.updatedAt || newTc.updatedAt,
+              lastExecutionResult: existingData.lastExecutionResult,
+              executionHistory: existingData.executionHistory || [],
+              lastAutoUpdate: existingData.lastAutoUpdate,
+              autoUpdated: existingData.autoUpdated || false
+            };
+          } else {
+            console.log(`=== NEW TEST CASE: ${newTc.testCaseId} = ${newTc.status} ===`);
+            return newTc;
+          }
+        });
+        
+        console.log('=== STATUS PRESERVATION COMPLETE ===');
+      }
+      
+      const result = await TEST_COLLECTION.updateOne(
+        { _id: new ObjectId(testId) },
+        {
+          $set: {
+            manualTestCases: finalManualTestCases,
+            manualTestCasesGeneratedAt: new Date()
+          }
+        }
+      );
+      
+      if (result.modifiedCount > 0) {
+        return { success: true, message: 'Manual test cases added successfully with preserved statuses' };
+      } else {
+        return { success: false, message: 'Test case not found' };
+      }
+      
+    } catch (error) {
+      console.error('Error adding manual test cases to test case:', error);
+      return { success: false, message: `Failed to add manual test cases: ${error.message}` };
+    }
+  };
+
+  /**
+   * Get manual test cases from test case document
+   */
+  static getManualTestCasesFromTestCase = async (testId: string) => {
+    try {
+      console.log('Getting manual test cases from test case:', testId);
+      
+      if (!ObjectId.isValid(testId)) {
+        return null;
+      }
+      
+      const testCase = await TEST_COLLECTION.findOne({ _id: new ObjectId(testId) });
+      
+      if (testCase && testCase.manualTestCases) {
+        return {
+          _id: testCase._id,
+          automatedTestId: testId,
+          testName: testCase.name,
+          manualTestCases: testCase.manualTestCases,
+          createdAt: testCase.manualTestCasesGeneratedAt || testCase.createdAt,
+          updatedAt: testCase.manualTestCasesGeneratedAt || testCase.createdAt
+        };
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.error('Error getting manual test cases from test case:', error);
+      return null;
+    }
+  };
+
+  /**
+   * Update manual test case status in test case document
+   */
+  static updateManualTestCaseStatusInTestCase = async (testId: string, testCaseId: string, status: string) => {
+    try {
+      console.log('Updating manual test case status in test case:', testId, testCaseId, status);
+      
+      if (!ObjectId.isValid(testId)) {
+        return { success: false, message: 'Invalid test ID format' };
+      }
+      
+      const result = await TEST_COLLECTION.updateOne(
+        {
+          _id: new ObjectId(testId),
+          'manualTestCases.testCaseId': testCaseId
+        },
+        {
+          $set: {
+            'manualTestCases.$.status': status,
+            'manualTestCases.$.updatedAt': new Date()
+          }
+        }
+      );
+      
+      if (result.modifiedCount > 0) {
+        return { success: true, message: 'Manual test case status updated successfully' };
+      } else {
+        return { success: false, message: 'Manual test case not found' };
+      }
+      
+    } catch (error) {
+      console.error('Error updating manual test case status:', error);
+      return { success: false, message: `Failed to update status: ${error.message}` };
+    }
+  };
+
+  /**
+   * Update manual test case statuses based on automated test execution results
+   * Statuses persist until the next test run or manual reset
+   */
+  static updateManualTestCaseStatusesAfterExecution = async (testId: string, testPassed: boolean, errorMessage?: string) => {
+    try {
+      console.log('=== PERSISTENT STATUS UPDATE ===');
+      console.log('Test ID:', testId);
+      console.log('Test Result:', testPassed ? 'PASSED' : 'FAILED');
+      console.log('Error Message:', errorMessage);
+      
+      if (!ObjectId.isValid(testId)) {
+        console.error('Invalid test ID format:', testId);
+        return { success: false, message: 'Invalid test ID format' };
+      }
+      
+      // Get the test case with manual test cases
+      const testCase = await TEST_COLLECTION.findOne({ _id: new ObjectId(testId) });
+      
+      if (!testCase || !testCase.manualTestCases || testCase.manualTestCases.length === 0) {
+        console.log('No manual test cases found for test:', testId);
+        return { success: false, message: 'No manual test cases found' };
+      }
+      
+      // Determine the status to set based on test execution result
+      const newStatus = testPassed ? 'Pass' : 'Fail';
+      
+      // Update all manual test cases with the execution result and execution history
+      const updatedManualTestCases = testCase.manualTestCases.map((tc: any) => {
+        // Preserve existing execution history
+        const executionHistory = tc.executionHistory || [];
+        
+        // Add new execution record
+        const newExecutionRecord = {
+          executedAt: new Date(),
+          passed: testPassed,
+          status: newStatus,
+          errorMessage: errorMessage || null,
+          autoUpdated: true,
+          executionId: new ObjectId().toString()
+        };
+        
+        // Keep last 10 execution records for history
+        const updatedHistory = [newExecutionRecord, ...executionHistory].slice(0, 10);
+        
+        return {
+          ...tc,
+          status: newStatus,
+          updatedAt: new Date(),
+          lastExecutionResult: newExecutionRecord,
+          executionHistory: updatedHistory,
+          // Track when status was last automatically updated
+          lastAutoUpdate: new Date(),
+          // Flag to indicate this was automatically updated
+          autoUpdated: true
+        };
+      });
+      
+      // Update the test case document with new statuses and execution metadata
+      const result = await TEST_COLLECTION.updateOne(
+        { _id: new ObjectId(testId) },
+        {
+          $set: {
+            manualTestCases: updatedManualTestCases,
+            lastExecutionUpdate: new Date(),
+            lastExecutionResult: {
+              executedAt: new Date(),
+              passed: testPassed,
+              status: newStatus,
+              errorMessage: errorMessage || null,
+              updatedTestCases: updatedManualTestCases.length
+            }
+          }
+        }
+      );
+      
+      if (result.modifiedCount > 0) {
+        console.log(`=== SUCCESS: Updated ${updatedManualTestCases.length} manual test cases to status: ${newStatus} ===`);
+        console.log('=== STATUS WILL PERSIST UNTIL NEXT TEST RUN OR MANUAL RESET ===');
+        
+        return {
+          success: true,
+          message: `Updated ${updatedManualTestCases.length} manual test cases to ${newStatus}. Status will persist until next test run.`,
+          updatedCount: updatedManualTestCases.length,
+          status: newStatus,
+          persistent: true,
+          executedAt: new Date()
+        };
+      } else {
+        return { success: false, message: 'Failed to update manual test cases' };
+      }
+      
+    } catch (error) {
+      console.error('Error updating manual test case statuses after execution:', error);
+      return { success: false, message: `Failed to update statuses: ${error.message}` };
+    }
+  };
+
+  /**
+   * Reset manual test case statuses to 'Pending' for a new test run
+   */
+  static resetManualTestCaseStatuses = async (testId: string, resetReason: string = 'Manual reset') => {
+    try {
+      console.log('=== RESETTING MANUAL TEST CASE STATUSES ===');
+      console.log('Test ID:', testId);
+      console.log('Reset Reason:', resetReason);
+      
+      if (!ObjectId.isValid(testId)) {
+        console.error('Invalid test ID format:', testId);
+        return { success: false, message: 'Invalid test ID format' };
+      }
+      
+      // Get the test case with manual test cases
+      const testCase = await TEST_COLLECTION.findOne({ _id: new ObjectId(testId) });
+      
+      if (!testCase || !testCase.manualTestCases || testCase.manualTestCases.length === 0) {
+        console.log('No manual test cases found for test:', testId);
+        return { success: false, message: 'No manual test cases found' };
+      }
+      
+      // Reset all manual test cases to 'Pending' status
+      const resetManualTestCases = testCase.manualTestCases.map((tc: any) => {
+        // Preserve execution history
+        const executionHistory = tc.executionHistory || [];
+        
+        // Add reset record to history
+        const resetRecord = {
+          executedAt: new Date(),
+          passed: null as boolean | null,
+          status: 'Pending',
+          errorMessage: null as string | null,
+          autoUpdated: false,
+          resetReason: resetReason,
+          executionId: new ObjectId().toString()
+        };
+        
+        const updatedHistory = [resetRecord, ...executionHistory].slice(0, 10);
+        
+        return {
+          ...tc,
+          status: 'Pending',
+          updatedAt: new Date(),
+          lastReset: new Date(),
+          resetReason: resetReason,
+          executionHistory: updatedHistory,
+          // Clear auto-update flag
+          autoUpdated: false
+        };
+      });
+      
+      // Update the test case document
+      const result = await TEST_COLLECTION.updateOne(
+        { _id: new ObjectId(testId) },
+        {
+          $set: {
+            manualTestCases: resetManualTestCases,
+            lastStatusReset: new Date(),
+            lastResetReason: resetReason
+          }
+        }
+      );
+      
+      if (result.modifiedCount > 0) {
+        console.log(`=== SUCCESS: Reset ${resetManualTestCases.length} manual test cases to 'Pending' status ===`);
+        
+        return {
+          success: true,
+          message: `Reset ${resetManualTestCases.length} manual test cases to 'Pending' status`,
+          resetCount: resetManualTestCases.length,
+          resetAt: new Date(),
+          resetReason: resetReason
+        };
+      } else {
+        return { success: false, message: 'Failed to reset manual test cases' };
+      }
+      
+    } catch (error) {
+      console.error('Error resetting manual test case statuses:', error);
+      return { success: false, message: `Failed to reset statuses: ${error.message}` };
+    }
+  };
+
+  /**
+   * Get execution history for manual test cases
+   */
+  static getManualTestCaseExecutionHistory = async (testId: string) => {
+    try {
+      console.log('Getting execution history for test:', testId);
+      
+      if (!ObjectId.isValid(testId)) {
+        return { success: false, message: 'Invalid test ID format' };
+      }
+      
+      const testCase = await TEST_COLLECTION.findOne({ _id: new ObjectId(testId) });
+      
+      if (!testCase || !testCase.manualTestCases) {
+        return { success: false, message: 'No manual test cases found' };
+      }
+      
+      // Extract execution history from all test cases
+      const executionHistory = testCase.manualTestCases.map((tc: any) => ({
+        testCaseId: tc.testCaseId,
+        currentStatus: tc.status,
+        lastExecutionResult: tc.lastExecutionResult,
+        executionHistory: tc.executionHistory || [],
+        lastAutoUpdate: tc.lastAutoUpdate,
+        lastReset: tc.lastReset
+      }));
+      
+      return {
+        success: true,
+        data: {
+          testId: testId,
+          testName: testCase.name,
+          lastExecutionUpdate: testCase.lastExecutionUpdate,
+          lastStatusReset: testCase.lastStatusReset,
+          lastResetReason: testCase.lastResetReason,
+          testCases: executionHistory
+        }
+      };
+      
+    } catch (error) {
+      console.error('Error getting execution history:', error);
+      return { success: false, message: `Failed to get execution history: ${error.message}` };
     }
   };
 }

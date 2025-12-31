@@ -23,7 +23,18 @@ const ipc = {
           "restoreTestCase",
           "permanentDeleteTestCase",
           "cleanupExpiredTrashItems",
-          "deleteAllTrashItems"
+          "deleteAllTrashItems",
+          "generateManualTestCases",
+          "getManualTestCases",
+          "updateManualTestCaseStatus",
+          "deleteManualTestCases",
+          "convertToManualTestCases",
+          "exportManualTestCases",
+          "advancedExportManualTestCases",
+          "getExportTemplates",
+          "getExportStatistics",
+          "resetManualTestCaseStatuses",
+          "getManualTestCaseExecutionHistory"
         ]
     }
 };
