@@ -5,6 +5,7 @@ import { execSync } from 'child_process';
 import { BrowserWindow, ipcMain, utilityProcess } from 'electron';
 import { test } from 'node:test';
 import { ObjectId } from 'mongodb';
+import { playwrightConverter } from './playwrightToSteps';
 
 const currentDir = __dirname; //will be inside webpack
 
@@ -33,7 +34,7 @@ const replaceUrl = (test: string, env: string) => {
       Qa: 'https://cleartax-qa-http.internal.cleartax.co',
       Prod: 'https://cleartax.in',
     };
-    const regex = /page\.goto\((.*?)\);/s;
+    const regex = /page\.goto\((.*?)\);/;
     const url = new URL(test.match(regex)[1].replace(/['"]+/g, ''));
     const newUrl = `${urlOriginMap[env as keyof typeof urlOriginMap]}${
       url.pathname
@@ -64,7 +65,7 @@ class TestServies {
   };
   static getAllTestCases = async () => {
     const testCases = await (
-      await TEST_COLLECTION.find().toArray()
+      await TEST_COLLECTION.find({ deleted: { $ne: true } }).toArray()
     ).map((ele) => ({ ...ele, _id: ele._id.toString() }));
 
     return testCases;
@@ -80,6 +81,7 @@ class TestServies {
       env: 'Dev' | 'Qa' | 'Prod';
       preTestId: string;
       projects: string[];
+      format?: string;
     };
     mainWindow: BrowserWindow;
   }) => {
@@ -87,6 +89,9 @@ class TestServies {
       const preTestChain = await TestServies.getPreTestChain(
         testCase.preTestId
       );
+      
+      // The .steps format is now actual Playwright code with test.step() wrappers
+      // No conversion needed - can run directly
       preTestChain.push(testCase.test); // Add the final test
 
       for (let i = 0; i < preTestChain.length; i++) {
@@ -120,18 +125,32 @@ class TestServies {
     testCase,
     name,
     preTestId,
+    mode,
+    runForIntegration = true,
+    isStepsFormat = false,
   }: {
     mainWindow: BrowserWindow;
     testCase: string;
     name: string;
     preTestId: string;
+    mode: string;
+    runForIntegration?: boolean;
+    isStepsFormat?: boolean;
   }) => {
     try {
       console.log('Record full TEST case preTestId', preTestId);
+      console.log('Is Steps Format:', isStepsFormat);
+      
+      // Save the test case as-is (either Playwright or .steps format)
       const test = await TEST_COLLECTION.insertOne({
-        test: testCase,
+        test: testCase, // Save the .steps format directly
         name: name,
         preTestId: preTestId,
+        mode: mode,
+        deleted: false,
+        createdAt: new Date(),
+        runForIntegration: runForIntegration,
+        format: isStepsFormat ? 'steps' : 'playwright', // Track the format
       });
       return { success: true };
     } catch (e) {
@@ -142,13 +161,23 @@ class TestServies {
   static recordTestCaseOnLocal = async ({
     mainWindow,
     preTestId,
+    mode,
   }: {
     mainWindow: BrowserWindow;
     preTestId: string;
+    mode: string;
   }) => {
     try {
-      console.log('REcorcd fullTEST local', preTestId);
-      let startUrl: string | null = null;
+      console.log('Record fullTEST local', preTestId, 'mode:', mode);
+      
+      // Set default URLs based on mode
+      const defaultUrls = {
+        DIY: 'https://cleartax-qa-http.internal.cleartax.co/entity',
+        AF: 'https://cleartax-qa-http.internal.cleartax.co/s/pricing'
+      };
+      
+      let startUrl: string = defaultUrls[mode as keyof typeof defaultUrls] || defaultUrls.DIY;
+      
       if (preTestId) {
         try {
           const preTest = await TEST_COLLECTION.findOne({
@@ -156,7 +185,10 @@ class TestServies {
           });
           console.log('inside pretest match found in', preTest);
           if (preTest) {
-            startUrl = extractLastGotoUrl(preTest.test);
+            const preTestUrl = extractLastGotoUrl(preTest.test);
+            if (preTestUrl) {
+              startUrl = preTestUrl; // Use pretest URL if available
+            }
             const child = utilityProcess.fork(
               path.join(__dirname, 'fork' + '.js')
             );
@@ -185,6 +217,8 @@ class TestServies {
           return;
         }
       }
+      
+      console.log('Starting recording with default URL for mode', mode, ':', startUrl);
       const child = utilityProcess.fork(path.join(__dirname, 'fork' + '.js'));
       child.postMessage({ type: 'record', startUrl: startUrl });
 
@@ -196,7 +230,7 @@ class TestServies {
 
   static deleteTestCase = async (testId: string) => {
     try {
-      console.log('Attempting to delete test case with ID:', testId);
+      console.log('Moving test case to trash with ID:', testId);
       
       // Check if the testId is a valid ObjectId
       if (!ObjectId.isValid(testId)) {
@@ -204,34 +238,135 @@ class TestServies {
         return { success: false, message: 'Invalid test ID format' };
       }
       
-      // Ensure database connection is available
-      if (!TEST_COLLECTION) {
-        console.error('Database collection not available');
-        return { success: false, message: 'Database connection error' };
-      }
+      // Mark as deleted instead of moving to separate collection
+      const result = await TEST_COLLECTION.updateOne(
+        { _id: new ObjectId(testId) },
+        {
+          $set: {
+            deleted: true,
+            deletedAt: new Date(),
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          }
+        }
+      );
       
-      console.log('About to perform delete operation...');
-      const result = await TEST_COLLECTION.deleteOne({
-        _id: new ObjectId(testId),
-      });
-      
-      console.log('Delete operation result:', result);
-      console.log('Deleted count:', result.deletedCount);
-      
-      if (result.deletedCount === 1) {
-        console.log('Test case deleted successfully');
-        return { success: true, message: 'Test case deleted successfully' };
+      if (result.modifiedCount === 1) {
+        console.log('Test case moved to trash successfully');
+        return { success: true, message: 'Test case moved to trash successfully' };
       } else {
-        console.log('Test case not found');
-        return { success: false, message: 'Test case not found' };
+        return { success: false, message: 'Test case not found or already deleted' };
       }
     } catch (error) {
-      console.error('Error deleting test case: ', error);
+      console.error('Error moving test case to trash: ', error);
       return { success: false, message: 'Failed to delete test case: ' + error.message };
     }
   };
 
-  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string }) => {
+  static getAllTrashItems = async () => {
+    try {
+      console.log('Getting all trash items...');
+      
+      const trashItems = await TEST_COLLECTION.find({ deleted: true }).toArray();
+      console.log('Raw trash items from DB:', trashItems.length);
+      
+      const processedItems = trashItems.map((ele) => ({
+        ...ele,
+        _id: ele._id.toString()
+      }));
+      
+      console.log('Returning processed trash items:', processedItems.length);
+      return processedItems;
+    } catch (error) {
+      console.error('Error getting trash items: ', error);
+      return [];
+    }
+  };
+
+  static restoreTestCase = async (trashId: string) => {
+    try {
+      console.log('Restoring test case with ID:', trashId);
+      
+      if (!ObjectId.isValid(trashId)) {
+        return { success: false, message: 'Invalid trash ID format' };
+      }
+      
+      // Mark as not deleted instead of moving between collections
+      const result = await TEST_COLLECTION.updateOne(
+        { _id: new ObjectId(trashId), deleted: true },
+        {
+          $unset: {
+            deleted: "",
+            deletedAt: "",
+            expiresAt: ""
+          }
+        }
+      );
+      
+      if (result.modifiedCount === 1) {
+        return { success: true, message: 'Test case restored successfully' };
+      } else {
+        return { success: false, message: 'Trash item not found or already restored' };
+      }
+    } catch (error) {
+      console.error('Error restoring test case: ', error);
+      return { success: false, message: 'Failed to restore test case: ' + error.message };
+    }
+  };
+
+  static permanentDeleteTestCase = async (trashId: string) => {
+    try {
+      console.log('Permanently deleting test case with ID:', trashId);
+      
+      if (!ObjectId.isValid(trashId)) {
+        return { success: false, message: 'Invalid trash ID format' };
+      }
+      
+      const result = await TEST_COLLECTION.deleteOne({
+        _id: new ObjectId(trashId),
+        deleted: true
+      });
+      
+      if (result.deletedCount === 1) {
+        return { success: true, message: 'Test case permanently deleted' };
+      } else {
+        return { success: false, message: 'Trash item not found' };
+      }
+    } catch (error) {
+      console.error('Error permanently deleting test case: ', error);
+      return { success: false, message: 'Failed to permanently delete test case: ' + error.message };
+    }
+  };
+
+  static cleanupExpiredTrashItems = async () => {
+    try {
+      const result = await TEST_COLLECTION.deleteMany({
+        deleted: true,
+        expiresAt: { $lte: new Date() }
+      });
+      
+      console.log(`Cleaned up ${result.deletedCount} expired trash items`);
+      return { success: true, deletedCount: result.deletedCount };
+    } catch (error) {
+      console.error('Error cleaning up expired trash items: ', error);
+      return { success: false, message: 'Failed to cleanup expired items: ' + error.message };
+    }
+  };
+
+  static deleteAllTrashItems = async () => {
+    try {
+      console.log('Deleting all trash items...');
+      
+      const result = await TEST_COLLECTION.deleteMany({ deleted: true });
+      
+      console.log(`Deleted all trash items. Count: ${result.deletedCount}`);
+      return { success: true, deletedCount: result.deletedCount, message: `Successfully deleted ${result.deletedCount} items from trash` };
+    } catch (error) {
+      console.error('Error deleting all trash items: ', error);
+      return { success: false, message: 'Failed to delete all trash items: ' + error.message };
+    }
+  };
+
+  static updateTestCase = async (testId: string, updatedData: { name?: string; test?: string; preTestId?: string; runForIntegration?: boolean , mode?: string }) => {
     try {
       if (!testId) {
         const result = { success: false, message: 'Test ID is required' };
@@ -249,6 +384,8 @@ class TestServies {
       if (updatedData.name !== undefined) updateFields.name = updatedData.name;
       if (updatedData.test !== undefined) updateFields.test = updatedData.test;
       if (updatedData.preTestId !== undefined) updateFields.preTestId = updatedData.preTestId;
+      if (updatedData.mode !== undefined) updateFields.mode = updatedData.mode;
+      if (updatedData.runForIntegration !== undefined) updateFields.runForIntegration = updatedData.runForIntegration;
       
       if (Object.keys(updateFields).length === 0) {
         const result = { success: false, message: 'No fields to update' };

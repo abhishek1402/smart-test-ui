@@ -1,18 +1,23 @@
-const path = require('path');
-const fs = require('fs');
-const { execSync } = require('child_process');
+/**
+ * Converts Playwright test scripts to proprietary .steps format
+ */
 
-// Embedded Playwright to Steps converter
 class PlaywrightToStepsConverter {
   constructor() {
     this.stepId = 1;
   }
 
+  /**
+   * Converts a Playwright test script to .steps format
+   */
   convertToSteps(playwrightScript, testName = 'Untitled Test') {
     this.stepId = 1;
     const steps = [];
     
+    // Remove imports and test wrapper
     const cleanScript = this.cleanScript(playwrightScript);
+    
+    // Split into lines and process each line
     const lines = cleanScript.split('\n').filter(line => line.trim());
     
     for (const line of lines) {
@@ -33,29 +38,52 @@ class PlaywrightToStepsConverter {
     };
   }
 
-  formatStepsForDisplay(stepsFormat) {
+  /**
+   * Converts .steps format back to Playwright script
+   */
+  convertToPlaywright(stepsFormat) {
     const imports = `import { test, expect } from '@playwright/test';\n\ntest.use({\n  storageState: '.auth/role1.json'\n});\n\n`;
     const testStart = `test('${stepsFormat.testName}', async ({ page }) => {\n`;
     const testEnd = `});`;
     
-    let stepsCode = '';
+    const playwrightLines = stepsFormat.steps.map(step => `  ${step.originalCode}`);
+    
+    return imports + testStart + playwrightLines.join('\n') + '\n' + testEnd;
+  }
+
+  /**
+   * Formats .steps for display in UI
+   */
+  formatStepsForDisplay(stepsFormat) {
+    let output = `# ${stepsFormat.testName}\n\n`;
     
     stepsFormat.steps.forEach((step, index) => {
-      const stepDescription = step.description.replace(/'/g, "\\'"); // Escape single quotes
-      stepsCode += `  await test.step('${index + 1}. ${stepDescription}', async () => {\n`;
-      stepsCode += `    ${step.originalCode}\n`;
-      stepsCode += `  });\n\n`;
+      output += `## Step ${index + 1}: ${step.description}\n`;
+      output += `**Action:** ${step.action}\n`;
+      if (step.target) output += `**Target:** ${step.target}\n`;
+      if (step.value) output += `**Value:** ${step.value}\n`;
+      output += `**Code:** \`${step.originalCode}\`\n\n`;
     });
     
-    return imports + testStart + stepsCode + testEnd;
+    output += `---\n*Converted from Playwright on ${new Date(stepsFormat.metadata.convertedAt).toLocaleString()}*`;
+    
+    return output;
   }
 
   cleanScript(script) {
+    // Remove imports
     let cleaned = script.replace(/import.*from.*['"].*['"];?\n?/g, '');
+    
+    // Remove test.use block
     cleaned = cleaned.replace(/test\.use\(\{[\s\S]*?\}\);?\n?/g, '');
+    
+    // Remove test wrapper
     cleaned = cleaned.replace(/test\(['"].*['"],\s*async\s*\(\{\s*page\s*\}\)\s*=>\s*\{/, '');
     cleaned = cleaned.replace(/\}\);?\s*$/, '');
+    
+    // Remove extra whitespace
     cleaned = cleaned.trim();
+    
     return cleaned;
   }
 
@@ -71,6 +99,7 @@ class PlaywrightToStepsConverter {
       originalCode: line
     };
 
+    // Parse different Playwright actions
     if (line.includes('page.goto(')) {
       const urlMatch = line.match(/page\.goto\(['"]([^'"]+)['"]\)/);
       step.action = 'navigate';
@@ -106,12 +135,41 @@ class PlaywrightToStepsConverter {
       step.action = 'type';
       step.description = `Type "${step.value}" in "${step.target}"`;
     }
+    else if (line.includes('.press(')) {
+      const matches = line.match(/page\.locator\(['"]([^'"]+)['"]\).*\.press\(['"]([^'"]*)['"]\)/);
+      if (matches) {
+        step.target = matches[1];
+        step.value = matches[2];
+      }
+      step.action = 'press';
+      step.description = `Press "${step.value}" on "${step.target}"`;
+    }
+    else if (line.includes('.selectOption(')) {
+      const matches = line.match(/page\.locator\(['"]([^'"]+)['"]\).*\.selectOption\(['"]([^'"]*)['"]\)/);
+      if (matches) {
+        step.target = matches[1];
+        step.value = matches[2];
+      }
+      step.action = 'select';
+      step.description = `Select "${step.value}" from "${step.target}"`;
+    }
     else if (line.includes('expect(')) {
       const expectMatch = line.match(/expect\(.*\)\.(.+)\(/);
       step.action = 'assert';
       step.description = `Assert: ${expectMatch ? expectMatch[1] : 'condition'}`;
     }
+    else if (line.includes('.hover()')) {
+      const selectorMatch = line.match(/page\.locator\(['"]([^'"]+)['"]\).*\.hover\(\)/);
+      step.target = selectorMatch ? selectorMatch[1] : '';
+      step.action = 'hover';
+      step.description = `Hover over element: ${step.target}`;
+    }
+    else if (line.includes('.waitFor')) {
+      step.action = 'wait';
+      step.description = 'Wait for element or condition';
+    }
     else {
+      // Generic action
       step.action = 'custom';
       step.description = `Custom action: ${line.substring(0, 50)}${line.length > 50 ? '...' : ''}`;
     }
@@ -120,84 +178,10 @@ class PlaywrightToStepsConverter {
   }
 }
 
+// Export singleton instance
 const playwrightConverter = new PlaywrightToStepsConverter();
 
-// import path from "path"
-// import fs from "fs"
-// import { execSync } from "child_process";
-const currentDir = __dirname; //will be inside webpack
-const rootDir = path.resolve(currentDir, '../../'); // More levels up as needed
-const extractLastGotoUrl = (testScript) => {
-  const gotoRegex = /page\.goto\(['"]([^'"]+)['"]\)/g;
-  const matches = [...testScript.matchAll(gotoRegex)];
-
-  if (matches.length > 0) {
-    return matches[matches.length - 1][1]; // Return the last match
-  }
-
-  return null;
+module.exports = {
+  PlaywrightToStepsConverter,
+  playwrightConverter
 };
-
-process.parentPort.on('message', async (e) => {
-  switch (e.data.type) {
-    case 'run':
-      {
-        const filePath = path.join(rootDir, 'test.spec.js');
-        await fs.writeFileSync(filePath, e.data.testCase);
-        // Extract the last `goto` URL
-        const data = fs.readFileSync(filePath, 'utf8');
-        const lastGotoUrl = extractLastGotoUrl(data);
-
-        console.log('Last goto URL:', lastGotoUrl); // Use this URL as needed
-        console.log('projects', e.data.projects);
-        const command = `playwright test test.spec.js --headed --reporter=html ${e.data.projects
-          .map((project) => '--project=' + project + ' ')
-          .join('')} ${lastGotoUrl} `;
-        console.info('Executing tests with command: ', command);
-        try {
-          const output = execSync(command);
-          console.log('output', output);
-        } catch (e) {
-          process.exit();
-        }
-        process.exit();
-      }
-      break;
-
-    case 'record': {
-      let startUrl = 'https://cleartax-qa-http.internal.cleartax.co/';
-      if (e.data.startUrl) {
-        startUrl = e.data.startUrl;
-      }
-      console.log('record start url', startUrl);
-      
-      // Use role1.json for consistent authentication across both DIY and AF modes
-      // role1.json is set up with QA environment authentication
-      const authFile = '.auth/role1.json';
-      
-      try {
-        console.log('>RECIRDstart>>>>> using auth file:', authFile);
-        const output = execSync(
-          `npx playwright codegen -o test.spec.js --load-storage=${authFile} ${startUrl}`
-        );
-        const filePath = path.join(rootDir, 'test.spec.js');
-        const playwrightScript = fs.readFileSync(filePath, 'utf8');
-        console.log('Original Playwright script:', playwrightScript);
-        
-        // Convert Playwright script to .steps format
-        const stepsFormat = playwrightConverter.convertToSteps(playwrightScript, 'Recorded Test');
-        const stepsDisplay = playwrightConverter.formatStepsForDisplay(stepsFormat);
-        
-        console.log('Converted to .steps format:', stepsDisplay);
-        
-        // Send the .steps format to the UI
-        process.parentPort.postMessage(stepsDisplay);
-      } catch (e) {
-        console.error('Recording failed:', e);
-        process.exit();
-      }
-
-      process.exit();
-    }
-  }
-});

@@ -13,7 +13,7 @@ import fs from 'fs/promises';
   // Microsoft Edge: '/Users/YourUsername/Library/Application Support/Microsoft Edge'
   // Google Chrome:  '/Users/YourUsername/Library/Application Support/Google/Chrome'
   const cookiesData = await fs.readFile(
-    '/Users/doncyriac/smart-test-ui/playwright/.auth/user.json',
+    '/Users/doncyriac/smart-test-ui/.auth/user.json',
     'utf-8'
   );
   const cookies = JSON.parse(cookiesData);

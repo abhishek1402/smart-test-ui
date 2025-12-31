@@ -13,7 +13,7 @@ export const TestLists = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>(['USER']);
   const [testStarted, setTestStarted] = useState<Record<string, boolean>>({});
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string } | null>(null);
+  const [editingTestCase, setEditingTestCase] = useState<{ name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string } | null>(null);
   useEffect(() => {
     window.ipcRender.invoke('getAllTestCases').then((data) => {
       setTestCases(data);
@@ -45,7 +45,7 @@ export const TestLists = () => {
     }
   };
 
-  const handleUpdate = async (testId: string, updatedData: { name?: string; test?: string }): Promise<void> => {
+  const handleUpdate = async (testId: string, updatedData: { name?: string; test?: string; runForIntegration?: boolean }): Promise<void> => {
     try {
       const result = await window.ipcRender.invoke('updateTestCase', { testId, updatedData });
       if (!result) {
@@ -67,7 +67,7 @@ export const TestLists = () => {
     }
   };
 
-  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string }) => {
+  const handleEdit = (testCase: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string }) => {
     setEditingTestCase(testCase);
     setIsEditModalOpen(true);
   };
@@ -107,18 +107,22 @@ export const TestLists = () => {
     );
   };
   return (
-    <div className="p-5">
-      {/* Add count display */}
-      <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-900">Test Cases</h2>
-        <div className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-lg">
-          Total: {testCases.length} test case{testCases.length !== 1 ? 's' : ''}
+    <div className="h-screen flex flex-col">
+      {/* Fixed header section */}
+      <div className="p-5 pb-0 flex-shrink-0">
+        <div className="mb-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-900">Test Cases</h2>
+          <div className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-lg">
+            Total: {testCases.length} test case{testCases.length !== 1 ? 's' : ''}
+          </div>
         </div>
       </div>
       
-      <div className="relative overflow-x-auto">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-900 uppercase bg-[#f8fbff] dark:bg-[#f8fbff] dark:text-gray-900">
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-auto px-5 pb-5">
+        <div className="relative">
+          <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <thead className="text-xs text-gray-900 uppercase bg-[#f8fbff] dark:bg-[#f8fbff] dark:text-gray-900 sticky top-0 z-10">
             <tr>
               {/* Add Serial Number column */}
               <th
@@ -135,7 +139,7 @@ export const TestLists = () => {
               </th>
               <th
                 scope="col"
-                className="w-[35%] px-6 py-3 border border-gray-500"
+                className="w-[25%] px-6 py-3 border border-gray-500"
               >
                 Test Cases
               </th>
@@ -167,6 +171,12 @@ export const TestLists = () => {
                 scope="col"
                 className="w-[10%] px-6 py-3 border border-gray-500"
               >
+                Integration
+              </th>
+              <th
+                scope="col"
+                className="w-[10%] px-6 py-3 border border-gray-500"
+              >
                 Actions
               </th>
             </tr>
@@ -193,8 +203,9 @@ export const TestLists = () => {
                 />
               );
             })}
-          </tbody>
-        </table>
+            </tbody>
+          </table>
+        </div>
       </div>
       
       <EditModal

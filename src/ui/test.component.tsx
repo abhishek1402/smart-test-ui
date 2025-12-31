@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { highlight, languages } from 'prismjs';
 import Editor from 'react-simple-code-editor';
+import { MODES } from './record-test.component';
 
 interface TestComponentProps {
-  ele: { name: string; test: string; _id: string; preTestId: string };
+  ele: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string };
   serialNumber: number;
   selectedDevices: string[];
   handleDeviceChange: (device: string) => void;
@@ -16,7 +17,7 @@ interface TestComponentProps {
   selectedUsers: string[];
   handleUserChange: (user: string) => void;
   onDelete: (testId: string) => void;
-  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string }) => void;
+  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string;runForIntegration?: boolean, mode?: string, format?: string }) => void;
 }
 
 const createProjectArray = (selectedUsers: string[]) => {
@@ -58,7 +59,16 @@ export const TestComponent: React.FC<TestComponentProps> = ({
         {serialNumber}
       </td>
       <td className="w-[10%] px-6 py-4 border border-gray-500 uppercase font-bold">
-        {ele.name}
+        <div className="flex flex-col">
+          <span>{ele.name}</span>
+          <span className={`text-xs font-medium px-2 py-1 rounded mt-1 inline-block w-fit ${
+            ele.mode === MODES.AF
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}>
+            {ele.mode || MODES.DIY}
+          </span>
+        </div>
       </td>
 
       <td className="w-[35%] px-6 py-4 border border-gray-500">
@@ -222,6 +232,11 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
+      <td className="w-[10%] px-6 py-4 border border-gray-500 text-center">
+        <div className={`font-semibold ${ele.runForIntegration !== false ? 'text-green-600' : 'text-red-600'}`}>
+          {ele.runForIntegration !== false ? 'Yes' : 'No'}
+        </div>
+      </td>
       <td className="w-[10%] px-2 py-4 border border-gray-500 2xl:px-6">
         <div className="flex flex-col gap-2">
           <button
@@ -236,6 +251,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
                   env: selectedEnvs.join(','),
                   preTestId: ele.preTestId,
                   projects: createProjectArray(selectedUsers),
+                  format: ele.format,
                 })
                 .then((data) => {
                   console.log(data);
