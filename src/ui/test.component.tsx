@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { highlight, languages } from 'prismjs';
 import Editor from 'react-simple-code-editor';
 import { MODES } from './record-test.component';
+import { ManualTestCasesModal } from './manual-test-cases-modal.component';
 
 interface TestComponentProps {
-  ele: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string };
+  ele: { name: string; test: string; _id: string; preTestId: string; runForIntegration?: boolean, mode?: string, format?: string, manualTestCases?: any[] };
   serialNumber: number;
   selectedDevices: string[];
   handleDeviceChange: (device: string) => void;
@@ -17,7 +18,9 @@ interface TestComponentProps {
   selectedUsers: string[];
   handleUserChange: (user: string) => void;
   onDelete: (testId: string) => void;
-  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string;runForIntegration?: boolean, mode?: string, format?: string }) => void;
+  onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string;runForIntegration?: boolean, mode?: string, format?: string, manualTestCases?: any[] }) => void;
+  isSelected: boolean;
+  onSelect: (testId: string) => void;
 }
 
 const createProjectArray = (selectedUsers: string[]) => {
@@ -52,27 +55,44 @@ export const TestComponent: React.FC<TestComponentProps> = ({
   handleUserChange,
   onDelete,
   onEdit,
+  isSelected,
+  onSelect,
 }) => {
+  const [isManualTestModalOpen, setIsManualTestModalOpen] = useState(false);
+
   return (
+    <>
     <tr className="hover:bg-gray-300 hover:text-gray-900 hover:border-gray-900 bg-white border-b dark:bg-gray-800">
-      <td className="w-[5%] px-6 py-4 border border-gray-500 text-center font-semibold">
-        {serialNumber}
+      <td className="px-6 py-4 border border-gray-500 text-center font-semibold" style={{ minWidth: "80px" }}>
+        <div className="flex flex-col items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect(ele._id)}
+            className="w-4 h-4 cursor-pointer"
+            title="Select this test case"
+          />
+          <span>{serialNumber}</span>
+        </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500 uppercase font-bold">
+      <td className="px-6 py-4 border border-gray-500 uppercase font-bold" style={{ minWidth: "180px" }}>
         <div className="flex flex-col">
-          <span>{ele.name}</span>
+          <span title={ele.name}>{ele.name}</span>
           <span className={`text-xs font-medium px-2 py-1 rounded mt-1 inline-block w-fit ${
-            ele.mode === MODES.AF
+            (ele.mode === MODES.AF || ele.mode === 'AF')
               ? 'bg-green-100 text-green-800'
               : 'bg-blue-100 text-blue-800'
           }`}>
-            {ele.mode || MODES.DIY}
+            {/* Display mode names */}
+            {ele.mode === 'DIY' || !ele.mode ? 'DIY Mode' :
+             ele.mode === 'AF' ? 'AF Mode' :
+             ele.mode}
           </span>
         </div>
       </td>
 
-      <td className="w-[35%] px-6 py-4 border border-gray-500">
-        <div className="h-[200px] overflow-y-auto sm:max-w-[380px] md:max-w-[510px] lg:max-w-[550px] xl:max-w-[650px] 2xl:max-w-[800px]">
+      <td className="px-6 py-4 border border-gray-500" style={{ width: "420px", minWidth: "420px" }}>
+        <div className="h-[200px] overflow-y-auto sm:max-w-[300px] md:max-w-[380px] lg:max-w-[420px] xl:max-w-[480px] 2xl:max-w-[550px]">
           <Editor
             className=""
             value={ele.test}
@@ -87,7 +107,25 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           />
         </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500 text-center" style={{ minWidth: "150px" }}>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              // Just open the modal - it will check if manual test cases exist in the database
+              // If they exist, it loads them from cache (no API call)
+              // If they don't exist, it shows a "Generate" button
+              console.log('📋 Opening manual test cases modal for:', ele.name);
+              setIsManualTestModalOpen(true);
+            }}
+            className="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800"
+            title="View manual test cases (loads from cache if available)"
+          >
+            VIEW
+          </button>
+        </div>
+      </td>
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "120px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -121,7 +159,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "120px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -158,7 +196,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "130px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -195,7 +233,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "100px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -232,12 +270,12 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500 text-center">
+      <td className="px-6 py-4 border border-gray-500 text-center" style={{ minWidth: "110px" }}>
         <div className={`font-semibold ${ele.runForIntegration !== false ? 'text-green-600' : 'text-red-600'}`}>
           {ele.runForIntegration !== false ? 'Yes' : 'No'}
         </div>
       </td>
-      <td className="w-[10%] px-2 py-4 border border-gray-500 2xl:px-6">
+      <td className="px-2 py-4 border border-gray-500 2xl:px-6" style={{ minWidth: "150px" }}>
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -282,5 +320,15 @@ export const TestComponent: React.FC<TestComponentProps> = ({
         </div>
       </td>
     </tr>
+    
+    {/* Manual Test Cases Modal */}
+    <ManualTestCasesModal
+      isOpen={isManualTestModalOpen}
+      onClose={() => setIsManualTestModalOpen(false)}
+      automatedTestId={ele._id}
+      testName={ele.name}
+      serialNumber={serialNumber}
+    />
+    </>
   );
 };

@@ -17,13 +17,25 @@ const ipc = {
           'getAllTestCases',
           "recordTestOnLocal",
           "run-test",
+          "runAllTests",
           "deleteTestCase",
           "updateTestCase",
           "getAllTrashItems",
           "restoreTestCase",
           "permanentDeleteTestCase",
           "cleanupExpiredTrashItems",
-          "deleteAllTrashItems"
+          "deleteAllTrashItems",
+          "generateManualTestCases",
+          "getManualTestCases",
+          "updateManualTestCaseStatus",
+          "deleteManualTestCases",
+          "convertToManualTestCases",
+          "exportManualTestCases",
+          "advancedExportManualTestCases",
+          "getExportTemplates",
+          "getExportStatistics",
+          "resetManualTestCaseStatuses",
+          "getManualTestCaseExecutionHistory"
         ]
     }
 };
