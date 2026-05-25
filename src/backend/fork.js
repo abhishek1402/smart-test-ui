@@ -148,19 +148,40 @@ process.parentPort.on('message', async (e) => {
         const data = fs.readFileSync(filePath, 'utf8');
         const lastGotoUrl = extractLastGotoUrl(data);
 
-        console.log('Last goto URL:', lastGotoUrl); // Use this URL as needed
-        console.log('projects', e.data.projects);
-        const command = `playwright test test.spec.js --headed --reporter=html ${e.data.projects
+        const headedFlag = e.data.headless ? '' : '--headed';
+        const workersFlag = e.data.headless ? '--workers=5 --max-failures=0' : '';
+
+        const environmentConfig = {
+          QA:   { baseUrl: 'https://cleartax-qa-http.internal.cleartax.co', buildEnv: 'qa' },
+          DEV:  { baseUrl: 'https://cleartax-dev-http.internal.cleartax.co', buildEnv: 'dev' },
+          PROD: { baseUrl: 'https://cleartax.in', buildEnv: 'prod' },
+        };
+
+        const environment = e.data.environment || 'QA';
+        const envConfig = environmentConfig[environment] || environmentConfig.QA;
+        const { baseUrl, buildEnv } = envConfig;
+
+        const command = `BASE_URL=${baseUrl} playwright test test.spec.js ${headedFlag} ${workersFlag} --reporter=html ${e.data.projects
           .map((project) => '--project=' + project + ' ')
           .join('')} ${lastGotoUrl} `;
-        console.info('Executing tests with command: ', command);
+        console.info('Executing tests:', command);
+
         try {
-          const output = execSync(command);
-          console.log('output', output);
+          const output = execSync(command, {
+            timeout: 7200000, // 2 hours (7,200,000 ms = 7,200 s = 120 min)
+            stdio: 'inherit',
+            maxBuffer: 50 * 1024 * 1024, // 50 MB stdout/stderr buffer
+            env: {
+              ...process.env,
+              BASE_URL: baseUrl,
+              BUILD_ENV: buildEnv,
+            }
+          });
+          process.exit(0);
         } catch (e) {
-          process.exit();
+          console.error('Playwright execution failed:', e.message);
+          process.exit(e.status || 1);
         }
-        process.exit();
       }
       break;
 
