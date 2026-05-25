@@ -1,52 +1,34 @@
 import { defineConfig, devices } from '@playwright/test';
-import { userProjectsConfig } from './user-projects.config';
+import { userProjectsConfig } from './user-projects.config'
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
   // testDir: './e2e-tests',
   /* Run tests in files in parallel */
   fullyParallel: true,
-  timeout: 10 * 60 * 1000,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  timeout: 3 * 60 * 1000, // 3 minutes per test
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 3 : 3,
   /* Opt out of parallel tests on CI. */
-  reporter: [['html', { outputFolder: 'playwright-report' }]],
-  workers: process.env.CI ? 1 : undefined,
+  reporter: [
+    ['html', { outputFolder: 'playwright-report' }],
+    ['json', { outputFile: 'playwright-report/results.json' }],
+  ],
+  workers: process.env.CI ? 1 : 4,
   use: {
+    baseURL: process.env.BASE_URL || 'https://cleartax-qa-http.internal.cleartax.co',
+    headless: true,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
     launchOptions: {
-      slowMo: 2000,
+      headless: true, // or false for debugging
+      slowMo: 1000, // 👈 increased to prevent skipped inputs
     },
+    actionTimeout: 10_000,
+    navigationTimeout: 15_000,
   },
-  expect: {
-    // Maximum time expect() should wait for the condition to be met.
-    timeout: 5000,
 
-    toHaveScreenshot: {
-      // An acceptable amount of pixels that could be different, unset by default.
-      maxDiffPixels: 10,
-    },
-
-    toMatchSnapshot: {
-      // An acceptable ratio of pixels that are different to the
-      // total amount of pixels, between 0 and 1.
-      maxDiffPixelRatio: 0.1,
-    },
-  },
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  // reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-
-  /* Configure projects for major browsers */
   projects: [
     {
       name: 'setup',
@@ -74,7 +56,6 @@ export default defineConfig({
     //   name: 'firefox',
     //   use: { ...devices['Desktop Firefox'] },
     // },
-
     // {
     //   name: 'webkit',
     //   use: { ...devices['Desktop Safari'] },

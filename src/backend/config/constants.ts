@@ -237,3 +237,33 @@ export const RECOMMENDATION_THRESHOLDS = {
   blockedRate: 10,
   minHighPriorityTests: 2
 };
+
+/**
+ * Environment Configuration
+ * Default build environment for test execution
+ */
+export const DEFAULT_BUILD_ENV = 'qa';
+
+export const ENVIRONMENT_CONFIG = {
+  qa: {
+    name: 'QA',
+    baseUrl: 'https://cleartax-qa-http.internal.cleartax.co',
+    description: 'QA Environment',
+    urlPattern: 'cleartax-qa-http.internal.cleartax.co'
+  },
+  dev: {
+    name: 'DEV',
+    baseUrl: 'https://cleartax-dev-http.internal.cleartax.co',
+    description: 'Development Environment',
+    urlPattern: 'cleartax-dev-http.internal.cleartax.co'
+  },
+  prod: {
+    name: 'PROD',
+    baseUrl: 'https://cleartax.in',
+    description: 'Production Environment (Live)',
+    urlPattern: 'cleartax.in',
+    isProduction: true
+  }
+} as const;
+
+export type BuildEnvironment = keyof typeof ENVIRONMENT_CONFIG;

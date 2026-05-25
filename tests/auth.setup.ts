@@ -7,8 +7,8 @@ const role3AuthFile = path.join(__dirname, '../.auth/role3.json');
 const roleLogins = [
   {
     roleType: 'user',
-    userName: 'fadem62741@cotasen.com',
-    password: 'Fadem62741@',
+    userName: 'dadog48694@getasail.com',
+    password: 'Dadog48694@getasail.com',
     authFile: role1AuthFile,
   },
   {
@@ -27,7 +27,7 @@ const roleLogins = [
 roleLogins.forEach((roleLogin) => {
   setup(`authenticate ${roleLogin.roleType}`, async ({ page }) => {
     // Perform authentication steps. Replace these actions with your own.
-
+    //await page.goto('https://cleartax.in/s/pricing');
     await page.goto('https://cleartax-qa-http.internal.cleartax.co/s/pricing');
     await page.getByRole('button', { name: 'Login/Signup' }).click();
     await page.getByPlaceholder('Enter email').click();
@@ -40,10 +40,8 @@ roleLogins.forEach((roleLogin) => {
     await page.getByPlaceholder('Password').click();
     await page.getByPlaceholder('Password').fill(roleLogin.password);
     await page.getByRole('button', { name: 'Login' }).click();
-    await page.waitForURL(
-      'https://cleartax-qa-http.internal.cleartax.co/s/pricing'
-    );
-
+    await page.waitForURL('https://cleartax-qa-http.internal.cleartax.co/s/pricing');
+    //await page.waitForURL('https://cleartax.in/s/pricing');
     // End of authentication steps.
 
     await page.context().storageState({ path: roleLogin.authFile });

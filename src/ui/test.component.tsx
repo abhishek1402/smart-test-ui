@@ -19,6 +19,8 @@ interface TestComponentProps {
   handleUserChange: (user: string) => void;
   onDelete: (testId: string) => void;
   onEdit: (testCase: { name: string; test: string; _id: string; preTestId: string;runForIntegration?: boolean, mode?: string, format?: string, manualTestCases?: any[] }) => void;
+  isSelected: boolean;
+  onSelect: (testId: string) => void;
 }
 
 const createProjectArray = (selectedUsers: string[]) => {
@@ -53,18 +55,29 @@ export const TestComponent: React.FC<TestComponentProps> = ({
   handleUserChange,
   onDelete,
   onEdit,
+  isSelected,
+  onSelect,
 }) => {
   const [isManualTestModalOpen, setIsManualTestModalOpen] = useState(false);
 
   return (
     <>
     <tr className="hover:bg-gray-300 hover:text-gray-900 hover:border-gray-900 bg-white border-b dark:bg-gray-800">
-      <td className="w-[5%] px-6 py-4 border border-gray-500 text-center font-semibold">
-        {serialNumber}
+      <td className="px-6 py-4 border border-gray-500 text-center font-semibold" style={{ minWidth: "80px" }}>
+        <div className="flex flex-col items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onSelect(ele._id)}
+            className="w-4 h-4 cursor-pointer"
+            title="Select this test case"
+          />
+          <span>{serialNumber}</span>
+        </div>
       </td>
-      <td className="w-[10%] px-6 py-4 border border-gray-500 uppercase font-bold">
+      <td className="px-6 py-4 border border-gray-500 uppercase font-bold" style={{ minWidth: "180px" }}>
         <div className="flex flex-col">
-          <span>{ele.name}</span>
+          <span title={ele.name}>{ele.name}</span>
           <span className={`text-xs font-medium px-2 py-1 rounded mt-1 inline-block w-fit ${
             (ele.mode === MODES.AF || ele.mode === 'AF')
               ? 'bg-green-100 text-green-800'
@@ -78,7 +91,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
         </div>
       </td>
 
-      <td className="w-[18%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ width: "420px", minWidth: "420px" }}>
         <div className="h-[200px] overflow-y-auto sm:max-w-[300px] md:max-w-[380px] lg:max-w-[420px] xl:max-w-[480px] 2xl:max-w-[550px]">
           <Editor
             className=""
@@ -94,7 +107,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           />
         </div>
       </td>
-      <td className="w-[8%] px-6 py-4 border border-gray-500 text-center">
+      <td className="px-6 py-4 border border-gray-500 text-center" style={{ minWidth: "150px" }}>
         <div className="flex flex-col items-center gap-2">
           <button
             type="button"
@@ -112,7 +125,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </button>
         </div>
       </td>
-      <td className="w-[8%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "120px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -146,7 +159,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[8%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "120px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -183,7 +196,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[8%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "130px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -220,7 +233,7 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[8%] px-6 py-4 border border-gray-500">
+      <td className="px-6 py-4 border border-gray-500" style={{ minWidth: "100px" }}>
         <div className="flex flex-col">
           <label className="flex items-center">
             <input
@@ -257,12 +270,12 @@ export const TestComponent: React.FC<TestComponentProps> = ({
           </label>
         </div>
       </td>
-      <td className="w-[8%] px-6 py-4 border border-gray-500 text-center">
+      <td className="px-6 py-4 border border-gray-500 text-center" style={{ minWidth: "110px" }}>
         <div className={`font-semibold ${ele.runForIntegration !== false ? 'text-green-600' : 'text-red-600'}`}>
           {ele.runForIntegration !== false ? 'Yes' : 'No'}
         </div>
       </td>
-      <td className="w-[16%] px-2 py-4 border border-gray-500 2xl:px-6">
+      <td className="px-2 py-4 border border-gray-500 2xl:px-6" style={{ minWidth: "150px" }}>
         <div className="flex flex-col gap-2">
           <button
             type="button"

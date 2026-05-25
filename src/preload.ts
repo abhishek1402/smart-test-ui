@@ -17,6 +17,7 @@ const ipc = {
           'getAllTestCases',
           "recordTestOnLocal",
           "run-test",
+          "runAllTests",
           "deleteTestCase",
           "updateTestCase",
           "getAllTrashItems",

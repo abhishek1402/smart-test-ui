@@ -105,4 +105,28 @@ export function registerTestCaseHandlers(mainWindow: BrowserWindow) {
       return errorResult;
     }
   });
+
+  ipcMain.handle('runAllTests', async (event: any, arg: any) => {
+    try {
+      if (!arg.testCaseIds || !Array.isArray(arg.testCaseIds)) {
+        return { success: false, message: 'Test case IDs array is required' };
+      }
+
+      if (arg.testCaseIds.length === 0) {
+        return { success: false, message: 'No test cases selected' };
+      }
+
+      const result = await TestServies.runMultipleTestCases({
+        testCaseIds: arg.testCaseIds,
+        mainWindow,
+        projects: arg.projects || ['chrome'],
+        environment: arg.environment || 'QA',
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error in runAllTests IPC handler:', error);
+      return { success: false, message: 'IPC handler error: ' + (error as Error).message };
+    }
+  });
 }

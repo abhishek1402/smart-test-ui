@@ -1,10 +1,12 @@
 import path from 'path';
 import DataBase from './mongoClient';
 import fs from 'fs';
-import { execSync } from 'child_process';
-import { BrowserWindow, ipcMain, utilityProcess } from 'electron';
+import { execSync, exec } from 'child_process';
+import { BrowserWindow, ipcMain, utilityProcess, shell } from 'electron';
 import { ObjectId } from 'mongodb';
 import { playwrightConverter } from './playwrightToSteps';
+import { createConsolidatedTestFile, getResultJsonSpecs } from './utils/testConsolidation';
+import { BuildEnvironment } from './config/constants';
 
 const currentDir = __dirname; //will be inside webpack
 
@@ -820,6 +822,230 @@ class TestServies {
       return { success: false, message: `Failed to get execution history: ${error.message}` };
     }
   };
+
+  static runMultipleTestCases = async ({
+    testCaseIds,
+    mainWindow,
+    projects,
+    environment = 'QA',
+  }: {
+    testCaseIds: string[];
+    mainWindow: BrowserWindow;
+    projects: string[];
+    environment?: string;
+  }) => {
+    try {
+      const testCases = await TEST_COLLECTION.find({
+        _id: { $in: testCaseIds.map(id => new ObjectId(id)) },
+        deleted: { $ne: true }
+      }).toArray();
+
+      if (testCases.length === 0) {
+        mainWindow.webContents.send('runAllTestsFailed', {
+          message: 'No test cases found',
+          results: [],
+          totalTests: 0,
+          passedTests: 0,
+          failedTests: 0
+        });
+        return { success: false, message: 'No test cases found' };
+      }
+
+      const testCasesWithPreTests = [];
+
+      for (const testCase of testCases) {
+        if (testCase.preTestId) {
+          const preTestChain = await TestServies.getPreTestChain(testCase.preTestId);
+
+          for (const preTest of preTestChain) {
+            testCasesWithPreTests.push({
+              _id: 'pretest-' + Math.random(),
+              test: preTest,
+              name: 'PreTest for ' + testCase.name
+            });
+          }
+        }
+
+        testCasesWithPreTests.push({
+          ...testCase,
+          _id: testCase._id.toString(),
+          test: testCase.test,
+          name: testCase.name
+        });
+      }
+
+      const envMap: Record<string, BuildEnvironment> = { DEV: 'dev', PROD: 'prod', QA: 'qa' };
+      const buildEnv: BuildEnvironment = envMap[environment] || 'qa';
+
+      const consolidatedTestFile = createConsolidatedTestFile(testCasesWithPreTests, buildEnv);
+      const consolidatedTestCode = fs.readFileSync(consolidatedTestFile, 'utf-8');
+
+      const child = utilityProcess.fork(path.join(__dirname, 'fork.js'));
+
+      child.postMessage({
+        testCase: consolidatedTestCode,
+        projects: projects,
+        type: 'run',
+        headless: true,
+        environment: environment,
+      });
+
+      let testResults: { testId: string; name: string; passed: boolean; error?: string }[] = [];
+
+      await new Promise<void>((resolve, reject) => {
+        const timeoutDuration = 7500000; // 125 minutes
+
+        const timeout = setTimeout(() => {
+          child.kill();
+
+          testResults = testCases.map(tc => ({
+            testId: tc._id.toString(),
+            name: tc.name,
+            passed: false,
+            error: 'Test execution timeout'
+          }));
+
+          mainWindow.webContents.send('runAllTestsFailed', {
+            message: 'Test execution timeout',
+            results: testResults,
+            totalTests: testCases.length,
+            passedTests: 0,
+            failedTests: testCases.length
+          });
+
+          reject(new Error('Test execution timeout'));
+        }, timeoutDuration);
+
+        child.on('exit', (code) => {
+          clearTimeout(timeout);
+
+          // Parse the Playwright JSON report for per-test results
+          const reportPath = path.join(rootDir, 'playwright-report', 'results.json');
+          const specResults = TestServies.parsePlaywrightResults(reportPath);
+
+          if (code === 0) {
+            testResults = testCases.map(tc => ({
+              testId: tc._id.toString(),
+              name: tc.name,
+              passed: true
+            }));
+
+            mainWindow.webContents.send('runAllTestsSuccess', {
+              message: `Successfully ran ${testCases.length} test cases`,
+              results: testResults,
+              totalTests: testCases.length,
+              passedTests: testCases.length,
+              failedTests: 0
+            });
+          } else if (specResults.length > 0) {
+            // We have per-test granularity from the JSON report
+            testResults = testCases.map(tc => {
+              const match = specResults.find(s => s.name === tc.name);
+              return {
+                testId: tc._id.toString(),
+                name: tc.name,
+                passed: match ? match.ok : false,
+                error: match && !match.ok ? `Test failed` : (!match ? `No result found in report` : undefined),
+              };
+            });
+
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = testResults.filter(r => !r.passed).length;
+
+            mainWindow.webContents.send('runAllTestsFailed', {
+              message: `${failed} of ${testCases.length} tests failed`,
+              results: testResults,
+              totalTests: testCases.length,
+              passedTests: passed,
+              failedTests: failed,
+            });
+          } else {
+            // No JSON report available — fall back to marking all failed
+            testResults = testCases.map(tc => ({
+              testId: tc._id.toString(),
+              name: tc.name,
+              passed: false,
+              error: `Test execution failed with exit code: ${code}`
+            }));
+
+            mainWindow.webContents.send('runAllTestsFailed', {
+              message: `Test execution failed with exit code: ${code}`,
+              results: testResults,
+              totalTests: testCases.length,
+              passedTests: 0,
+              failedTests: testCases.length
+            });
+          }
+
+          resolve();
+        });
+      });
+
+      // Open Playwright HTML report
+      try {
+        const reportIndexPath = path.join(rootDir, 'playwright-report', 'index.html');
+        if (fs.existsSync(reportIndexPath)) {
+          shell.openPath(reportIndexPath);
+        }
+      } catch (reportError) {
+        console.error('Error opening report:', reportError);
+      }
+
+      // Update manual test case statuses
+      for (const testCase of testCases) {
+        const testResult = testResults.find(r => r.testId === testCase._id.toString());
+        if (testResult) {
+          await TestServies.updateManualTestCaseStatusesAfterExecution(
+            testCase._id.toString(),
+            testResult.passed,
+            testResult.error
+          );
+        }
+      }
+
+      try {
+        fs.unlinkSync(consolidatedTestFile);
+      } catch (_) {}
+
+      const passedCount = testResults.filter(r => r.passed).length;
+      const failedCount = testResults.filter(r => !r.passed).length;
+
+      return {
+        success: failedCount === 0,
+        message: failedCount === 0
+          ? `Successfully ran ${testCases.length} test cases`
+          : `${failedCount} of ${testCases.length} tests failed`,
+        results: testResults,
+        totalTests: testCases.length,
+        passedTests: passedCount,
+        failedTests: failedCount,
+      };
+
+    } catch (err: any) {
+      console.error('Error running multiple test cases:', err);
+      mainWindow.webContents.send('runAllTestsFailed', {
+        message: err.message,
+        results: []
+      });
+      return { success: false, message: err.message };
+    }
+  };
+
+  private static parsePlaywrightResults(reportPath: string): { name: string; ok: boolean }[] {
+    try {
+      if (!fs.existsSync(reportPath)) return [];
+      const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+      const results: { name: string; ok: boolean }[] = [];
+      if (report.suites) {
+        for (const suite of report.suites) {
+          results.push(...getResultJsonSpecs(suite));
+        }
+      }
+      return results;
+    } catch {
+      return [];
+    }
+  }
 }
 
 export default TestServies;
