@@ -12,7 +12,8 @@ export const plugins = [
   new CopyPlugin({
     patterns: [
       {
-        from: path.resolve(__dirname,'src/backend/fork.js')
+        from: path.resolve(__dirname,'src/backend/fork.js'),
+        to: 'fork.js'
       }
     ],
     options: {
